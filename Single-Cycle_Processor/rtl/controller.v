@@ -5,7 +5,8 @@ module controller(
     input wire zero,
 
     output reg [1:0] imm_src,
-    output reg pc_src, alu_src, result_src,
+    output wire pc_src, 
+    output reg alu_src, result_src,
     output reg reg_write, mem_write,
     output reg [2:0] alu_control
 );

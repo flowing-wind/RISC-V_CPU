@@ -2,9 +2,9 @@
 
 ## System Overview
 
-![complete architecture](E:\Projects\RISC-V CPU\Single-Cycle Processor\attachment\complete architecture.png)
+![complete architecture](E:\Projects\RISC-V CPU\Single-Cycle Processor\_attachment\complete architecture.png)
 
-![interfaced to ext mem](E:\Projects\RISC-V CPU\Single-Cycle Processor\attachment\interfaced to ext mem.png)
+![interfaced to ext mem](E:\Projects\RISC-V CPU\Single-Cycle Processor\_attachment\interfaced to ext mem.png)
 
 ## Modules
 

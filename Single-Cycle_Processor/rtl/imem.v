@@ -8,7 +8,7 @@ module imem (
 
     // init
     initial begin
-        $readmemh("testinstr.txt", RAM)
+        $readmemh("testinstr.txt", RAM);
     end
 
     assign rd = RAM[addr];

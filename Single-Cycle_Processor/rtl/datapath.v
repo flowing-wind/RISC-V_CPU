@@ -8,7 +8,7 @@ module datapath (
     input wire [2:0] alu_control,
 
     output reg [31:0] pc,
-    output wire [31:0] zero,
+    output wire zero,
     output wire [31:0] alu_result,
     output wire [31:0] write_data
 );

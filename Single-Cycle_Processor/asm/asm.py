@@ -2,7 +2,8 @@ import sys
 
 OP = {
     'R-Type':   '0110011',
-    'I-Type':   '0000011',
+    'I-Type1':  '0000011',
+    'I-Type2':  '0010011',
     'S-Type':   '0100011',
     'B-Type':   '1100011'
 }
@@ -16,6 +17,7 @@ FUNCT = {
     'and':  {'funct3': '111'},
     # I-Type
     'lw':   {'funct3': '010'},
+    'addi': {'funct3': '000'},
     # S-Type
     'sw':   {'funct3': '010'},
     # B-Type
@@ -23,6 +25,7 @@ FUNCT = {
 }
 
 REGISTERS = {f'x{i}': i for i in range(32)}
+
 
 # convert an int to bin
 # val can be string
@@ -74,7 +77,7 @@ def assemble(asm_file, hex_file):
             rs1 = to_bin(REGISTERS[rs1], 5)
             imm = to_bin(offset, 12)
             funct3 = FUNCT[instr]['funct3']
-            op = OP['I-Type']
+            op = OP['I-Type1']
             # imm[11:0] | rs1 | funct3 | rd | op
             machine_code = f"{imm}{rs1}{funct3}{rd}{op}"
 
@@ -86,7 +89,7 @@ def assemble(asm_file, hex_file):
             rs1 = to_bin(REGISTERS[args[1]], 5)
             imm = to_bin(args[2], 12)
             funct3 = FUNCT[instr]['funct3']
-            op = OP['I-Type']
+            op = OP['I-Type2']
             # imm[11:0] | rs1 | funct3 | rd | op
             machine_code = f"{imm}{rs1}{funct3}{rd}{op}"
 
@@ -125,9 +128,9 @@ def assemble(asm_file, hex_file):
 
         # convert to hex
         if machine_code:
-            hex_val = f"{int(machine_code, 2):08x}"
+            hex_val = f"{int(machine_code, 2):08X}"
             output_hex.append(hex_val)
-            print(f"{line:<20} -> 0x{hex_val}")
+            # print(f"{line:<20} -> 0x{hex_val}")
     
     with open(hex_file, 'w') as f:
         f.write('\n'.join(output_hex))
