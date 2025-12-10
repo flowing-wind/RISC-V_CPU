@@ -62,7 +62,7 @@ def assemble(asm_file, hex_file):
             # funct7 | rs2 | rs1 | funct3 | rd | op
             machine_code = f"{funct7}{rs2}{rs1}{funct3}{rd}{op}"
 
-        # I-Type
+        # I-Type    op = 0d3
         # lw    rd,  imm(rs1)
         # imm: 0x 0h 0d 0b ?
         # imm(offfset) 0d by default
@@ -73,6 +73,18 @@ def assemble(asm_file, hex_file):
 
             rs1 = to_bin(REGISTERS[rs1], 5)
             imm = to_bin(offset, 12)
+            funct3 = FUNCT[instr]['funct3']
+            op = OP['I-Type']
+            # imm[11:0] | rs1 | funct3 | rd | op
+            machine_code = f"{imm}{rs1}{funct3}{rd}{op}"
+
+        # I-Type    op = 0d19
+        # addi  rd,  rs1, imm
+        # imm 0d by default
+        elif instr in ['addi']:
+            rd = to_bin(REGISTERS[args[0]], 5)
+            rs1 = to_bin(REGISTERS[args[1]], 5)
+            imm = to_bin(args[2], 12)
             funct3 = FUNCT[instr]['funct3']
             op = OP['I-Type']
             # imm[11:0] | rs1 | funct3 | rd | op
