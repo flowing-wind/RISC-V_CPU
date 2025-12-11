@@ -1,1 +1,8 @@
+__pycache__/
+*.pyc
+
 sim/
+sim_build/
+*.vvp
+*.vcd
+results.xml
