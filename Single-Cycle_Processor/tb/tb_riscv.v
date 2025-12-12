@@ -59,13 +59,7 @@ module tb_riscv ();
 
     always @(negedge clk ) begin
         if (mem_write)
-            $display("Write data %h to dmem address %h.", write_data, data_addr);
-        // $display("PC=%h | x1=%h, x2=%h, x3=%h, x4=%h",
-        //         dut.pc,
-        //         dut.d_unit.rf.rf[1],
-        //         dut.d_unit.rf.rf[2],
-        //         dut.d_unit.rf.rf[3],
-        //         dut.d_unit.rf.rf[4]);
+             $display("Write data %h to dmem address %h.", write_data, data_addr);
     end
     
 endmodule

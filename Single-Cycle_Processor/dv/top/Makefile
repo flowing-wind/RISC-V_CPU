@@ -33,7 +33,7 @@ compile_hex:
 
 cleanup:
 	@echo "[Clean] Cleaning up previous run..."
-	rm -f $(ASM_SRC) $(HEX_DST) $(EXP_JSON)
+	rm -f $(ASM_SRC) $(HEX_DST) $(EXP_JSON) results.xml wave.vcd
 	rm -f $(ASM_DIR)/$(ASM_SRC)
 
 

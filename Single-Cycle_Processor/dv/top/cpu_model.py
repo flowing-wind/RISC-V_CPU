@@ -35,7 +35,7 @@ class CPU_Model:
 
         self.regs[rd] = res & 0xFFFFFFFF
 
-def generate_files(asm_file, json_file, num_instr=50):
+def generate_files(asm_file, json_file, num_instr=60):
     cpu = CPU_Model()
     asm_code = []
     ops_r = ['add', 'sub', 'and', 'or', 'slt']
@@ -56,6 +56,8 @@ def generate_files(asm_file, json_file, num_instr=50):
             op = random.choice(ops_r)
             cpu.step(op, rd, rs1, rs2, 0)
             asm_code.append(f"{op} x{rd}, x{rs1}, x{rs2}")
+    
+    asm_code.append("beq x0, x0, 0")
     
     with open(asm_file, 'w') as f:
         f.write('\n'.join(asm_code))
