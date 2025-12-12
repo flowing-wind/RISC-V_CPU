@@ -12,9 +12,9 @@ FUNCT = {
     # R-Type
     'add':  {'funct3': '000', 'funct7': '0000000'},
     'sub':  {'funct3': '000', 'funct7': '0100000'},
-    'slt':  {'funct3': '010'},
-    'or':   {'funct3': '110'},
-    'and':  {'funct3': '111'},
+    'slt':  {'funct3': '010', 'funct7': '0000000'},
+    'or':   {'funct3': '110', 'funct7': '0000000'},
+    'and':  {'funct3': '111', 'funct7': '0000000'},
     # I-Type
     'lw':   {'funct3': '010'},
     'addi': {'funct3': '000'},
@@ -136,4 +136,4 @@ def assemble(asm_file, hex_file):
         f.write('\n'.join(output_hex))
 
 if __name__ == "__main__":
-    assemble("assembly.asm", "testinstr.txt")
+    assemble("instr.asm", "instr.txt")

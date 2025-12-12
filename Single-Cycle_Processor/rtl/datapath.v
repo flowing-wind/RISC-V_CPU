@@ -39,6 +39,7 @@ module datapath (
     // Register File
     reg_file rf (
         .clk (clk),
+        .reset (reset),
         .we3 (reg_write),
         .wd3 (result),
         .a1 (instr[19:15]),

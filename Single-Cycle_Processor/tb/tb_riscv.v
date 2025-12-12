@@ -53,7 +53,7 @@ module tb_riscv ();
         reset = 1;
         #20 reset = 0;
 
-        #500;
+        #100000;
         $finish;
     end
 
