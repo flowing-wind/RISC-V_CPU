@@ -6,3 +6,6 @@ sim_build/
 *.vvp
 *.vcd
 results.xml
+*.asm
+*.txt
+*.json
