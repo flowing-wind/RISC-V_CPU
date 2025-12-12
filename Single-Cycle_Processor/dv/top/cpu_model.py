@@ -35,7 +35,7 @@ class CPU_Model:
 
         self.regs[rd] = res & 0xFFFFFFFF
 
-def generate_files(asm_file, json_file, num_instr=60):
+def generate_files(asm_file, json_file, num_instr=1023):
     cpu = CPU_Model()
     asm_code = []
     ops_r = ['add', 'sub', 'and', 'or', 'slt']

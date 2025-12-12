@@ -14,7 +14,7 @@ async def verify(dut):
     cocotb.log.info("[Test] Start Simulation...")
 
     # Start Simulation
-    await Timer(2000, unit='ns')
+    await Timer(500000, unit='ns')
 
     cocotb.log.info("[Test] Checking Registers...")
 

@@ -23,7 +23,7 @@ module tb_riscv ();
 
     // Instruction Memory
     imem imem_unit (
-        .addr (pc[7:2]),    // 32 bits at a time
+        .addr (pc[31:2]),    // 32 bits at a time
 
         .rd (instr)
     );
@@ -54,7 +54,7 @@ module tb_riscv ();
         #20 reset = 0;
 
         #100000;
-        $finish;
+        // $finish;
     end
 
     always @(negedge clk ) begin

@@ -34,6 +34,8 @@ compile_hex:
 cleanup:
 	@echo "[Clean] Cleaning up previous run..."
 	rm -f $(ASM_SRC) $(HEX_DST) $(EXP_JSON) results.xml wave.vcd
+	rm -rf sim_build/
+	rm -rf __pycache__
 	rm -f $(ASM_DIR)/$(ASM_SRC)
 
 
