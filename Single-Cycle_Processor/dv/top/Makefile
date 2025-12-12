@@ -6,7 +6,7 @@ PROJ_DIR = ../..
 VERILOG_SOURCES += $(wildcard $(PROJ_DIR)/rtl/*.v) $(wildcard $(PROJ_DIR)/tb/*.v)
 
 TOPLEVEL = tb_riscv
-MODULE = test_top   
+COCOTB_TEST_MODULES = test_top   
 
 ASM_SRC = instr.asm
 HEX_DST = instr.txt
