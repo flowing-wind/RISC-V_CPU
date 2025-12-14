@@ -23,6 +23,7 @@ module riscv_processor(
         .funct3 (funct3),
         .funct7b5 (funct7b5),
         .zero (zero),
+        .alu_result (alu_result),
 
         .imm_src (imm_src),
         .pc_src (pc_src), 

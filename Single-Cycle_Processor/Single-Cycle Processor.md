@@ -54,3 +54,30 @@
 
    - same as beq, jump to pc + Imm(label), which is PC Target
 
+8. Extend pc_src to support jalr from alu
+
+	| pc_src |  source   |
+	| :----: | :-------: |
+	| 2'b00  |  PC + 4   |
+	| 2'b01  | PC + Imm  |
+	| 2'b10  | rs1 + Imm |
+	
+	- Although ALU can calculate PC + Imm now, the beq instr need to calculate
+	
+	  1. rs1 - rs2
+	  2. pc + imm
+	
+	  Which cannot be completed in one cycle (as there is only one ALU).
+
+
+
+| alu_op |       operation        |
+| :----: | :--------------------: |
+| 2'b00  |          add           |
+| 2'b01  |  B-Type, check funct3  |
+| 2'b10  | I/R-Type, check funct3 |
+
+
+
+
+

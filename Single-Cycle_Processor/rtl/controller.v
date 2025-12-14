@@ -3,6 +3,7 @@ module controller(
     input wire [2:0] funct3,
     input wire funct7b5,
     input wire zero,
+    input wire [31:0] alu_result,
 
     output reg [2:0] imm_src,
     output reg [1:0] pc_src,
@@ -15,6 +16,7 @@ module controller(
 
     reg [1:0] alu_op;   // whether to check funct3
     reg branch, is_jal, is_jalr;
+    wire alu_lsb = alu_result[0];
 
     // Main Decoder
     always @(*) begin
@@ -29,6 +31,13 @@ module controller(
         is_jal = 0;
         is_jalr = 0;
         alu_op = 2'b00;
+
+        // | alu_op |       operation        |
+        // | :----: | :--------------------: |
+        // | 2'b00  |          add           |
+        // | 2'b01  |  B-Type, check funct3  |
+        // | 2'b10  | I/R-Type, check funct3 |
+
 
         case (op)
             // R-Type
@@ -99,7 +108,7 @@ module controller(
                 mem_write = 0;
                 result_src = 2'bxx;
                 branch = 1;
-                alu_op = 2'b01; // sub
+                alu_op = 2'b01;
             end
 
             // U-Type
@@ -144,8 +153,19 @@ module controller(
     always @(*) begin
         case (alu_op)
             2'b00: alu_control = 4'b0000;    // add
-            2'b01: alu_control = 4'b0001;    // sub
             // check funct3
+            2'b01: begin
+                case (funct3)
+                    3'b000: alu_control = 4'b0001;  // beq  -->  sub
+                    3'b001: alu_control = 4'b0001;  // bne  -->  sub
+                    3'b100: alu_control = 4'b0101;  // blt  -->  slt <
+                    3'b101: alu_control = 4'b0101;  // bge  -->  slt >=
+                    3'b110: alu_control = 4'b0110;  // bltu  -->  sltu <
+                    3'b111: alu_control = 4'b0110;  // bgeu  -->  sltu >=
+
+                    default: alu_control = 4'b0001;
+                endcase
+            end
             2'b10: begin
                 case (funct3)
                     3'b000: begin
@@ -174,10 +194,24 @@ module controller(
     end
 
     // pc_src choose
+    reg branch_taken;
+
+    always @( *) begin
+        case (funct3)
+            3'b000: branch_taken = zero;
+            3'b001: branch_taken = ~zero;
+            3'b100: branch_taken = (alu_lsb != 0);
+            3'b101: branch_taken = (alu_lsb == 0);
+            3'b110: branch_taken = (alu_lsb != 0);
+            3'b111: branch_taken = (alu_lsb == 0);
+
+            default: branch_taken = 0;
+        endcase
+    end
     always @( *) begin
         if (is_jalr)
             pc_src = 2'b10; // from alu
-        else if (is_jal || (branch & zero))
+        else if (is_jal || (branch && branch_taken))
             pc_src = 2'b01;
         else
             pc_src = 2'b00;
