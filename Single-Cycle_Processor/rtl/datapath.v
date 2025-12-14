@@ -2,20 +2,26 @@ module datapath (
     input wire [31:0] instr,
     input wire clk, reset,
     input wire [31:0] read_data,
-    input wire [1:0] imm_src,
-    input wire pc_src, alu_src, result_src,
+    input wire [2:0] imm_src,
+    input wire [1:0] pc_src,
+    input wire [1:0] alu_src_a,
+    input wire alu_src_b,
+    input [1:0] result_src,
     input wire reg_write,
-    input wire [2:0] alu_control,
+    input wire [3:0] alu_control,
 
     output reg [31:0] pc,
     output wire zero,
     output wire [31:0] alu_result,
     output wire [31:0] write_data
 );
-    wire [31:0] pc_next, pc_plus4, pc_target;
+    reg [31:0] pc_next;
+    wire [31:0] pc_plus4, pc_target;
     wire [31:0] imm_ext;
-    wire [31:0] src_a, src_b;
-    wire [31:0] result;
+    reg [31:0] src_a;
+    wire [31:0] src_b;
+    wire [31:0] rf_rd1;
+    reg [31:0] result;
 
     // PC Logic
     always @(posedge clk or posedge reset) begin
@@ -28,13 +34,41 @@ module datapath (
     // Decide next pc
     assign pc_plus4 = pc + 32'd4;
     assign pc_target = pc + imm_ext;
-    assign pc_next = (pc_src) ? pc_target : pc_plus4;
+
+    always @( *) begin
+        case (pc_src)
+            2'b00: pc_next = pc_plus4;
+            2'b01: pc_next = pc_target;
+            2'b10: pc_next = alu_result;
+
+            default: pc_next = pc_plus4;
+        endcase
+    end
+
+    // Choose src_a
+    always @( *) begin
+        case (alu_src_a)
+            2'b00: src_a = rf_rd1;
+            2'b01: src_a = pc;
+            2'b10: src_a = 32'b0;
+
+            default: src_a = rf_rd1;
+        endcase
+    end
 
     // Choose src_b
-    assign src_b = (alu_src) ? imm_ext : write_data;
+    assign src_b = (alu_src_b) ? imm_ext : write_data;
 
     // Choose result
-    assign result = (result_src) ? read_data : alu_result;
+    always @( *) begin
+        case (result_src)
+            2'b00: result = alu_result;
+            2'b01: result = read_data;
+            2'b10: result = pc_plus4;
+            
+            default: result = alu_result;
+        endcase
+    end
 
     // Register File
     reg_file rf (
@@ -46,7 +80,7 @@ module datapath (
         .a2 (instr[24:20]),
         .a3 (instr[11:7]),
 
-        .rd1 (src_a),
+        .rd1 (rf_rd1),
         .rd2 (write_data)
     );
 

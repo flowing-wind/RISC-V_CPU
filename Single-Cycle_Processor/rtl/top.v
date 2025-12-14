@@ -11,9 +11,12 @@ module riscv_processor(
     wire [6:0] op = instr[6:0];
     wire [2:0] funct3 = instr[14:12];
     wire funct7b5 = instr[30];
-    wire zero, pc_src, result_src, alu_src, reg_write;
-    wire [1:0] imm_src;
-    wire [2:0] alu_control;
+    wire [1:0] pc_src;
+    wire [1:0] alu_src_a;
+    wire zero, alu_src_b, reg_write;
+    wire [1:0] result_src;
+    wire [2:0] imm_src;
+    wire [3:0] alu_control;
 
     controller c_unit (
         .op (op),
@@ -23,7 +26,8 @@ module riscv_processor(
 
         .imm_src (imm_src),
         .pc_src (pc_src), 
-        .alu_src (alu_src), 
+        .alu_src_a (alu_src_a),
+        .alu_src_b (alu_src_b), 
         .result_src (result_src),
         .reg_write (reg_write), 
         .mem_write (mem_write),
@@ -36,8 +40,9 @@ module riscv_processor(
         .reset (reset),
         .read_data (read_data),
         .imm_src (imm_src),
-        .pc_src (pc_src), 
-        .alu_src (alu_src), 
+        .pc_src (pc_src),
+        .alu_src_a (alu_src_a),
+        .alu_src_b (alu_src_b), 
         .result_src (result_src),
         .reg_write (reg_write),
         .alu_control (alu_control),

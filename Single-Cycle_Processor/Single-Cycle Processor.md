@@ -2,74 +2,55 @@
 
 ## System Overview
 
-![complete architecture](E:\Projects\RISC-V CPU\Single-Cycle Processor\_attachment\complete architecture.png)
+![complete architecture](E:\Projects\RISC-V_CPU\Single-Cycle_Processor\_attachment\complete architecture.png)
 
-![interfaced to ext mem](E:\Projects\RISC-V CPU\Single-Cycle Processor\_attachment\interfaced to ext mem.png)
+![interfaced to ext mem](E:\Projects\RISC-V_CPU\Single-Cycle_Processor\_attachment\interfaced to ext mem.png)
 
-## Modules
+## History
+12.14 update:
 
-### Processor
-The Processor is the main part of the CPU, containing a Controller and Datapath.
+1. Extend alu_control to support more alu operations:
 
-#### Interface
-- Controller
-  - Input
-    - Instr [31:0]  -->  Receive instruction from (External) Instruction Memory.
+   | Operation | alu_control |       ex. instr        |           verilog           |
+   | :-------: | :---------: | :--------------------: | :-------------------------: |
+   |    ADD    |   4'b0000   | add, addi, lw, sw, jal |            A + B            |
+   |    SUB    |   4'b0001   |     sub, beq, bne      |            A - B            |
+   |    AND    |   4'b0010   |       and, andi        |            A & B            |
+   |    OR     |   4'b0011   |        or, ori         |           A \| B            |
+   |    XOR    |   4'b0100   |       xor, xori        |            A ^ B            |
+   |    SLT    |   4'b0101   |       slt, slti        | `($signed(A) < $signed(B))` |
+   |   SLTU    |   4'b0110   |      sltu, sltiu       |           (A < B)           |
+   |    SLL    |   4'b0111   |       sll, slli        |           A << B            |
+   |    SRL    |   4'b1000   |       srl, srli        |           A >> B            |
+   |    SRA    |   4'b1001   |       sra, srai        |           A >>> B           |
 
-  - Output
-    - MemWrite  -->  Control the WE (Write Enable) port of the (External) Data Memory.
-      - 0  -->  Read data from memory.
-      - 1  -->  Write data to memory.
+2. Add I-Type, U-Type, J-Type logic
 
-- Datapath
-  - Input
-    - CLK
-    - Reset
-    - Instr [31:0]
-    - ReadData [31:0]  -->  Connect to RD port of Data Memory.
+3. Extend imm_src to support U-Type and J-Type Instruction.
 
-  - Output
-    - PC [31:0]  -->  Pointer to the address of the instruction, connect to the A(ddress) port of Instruction Memory.
-    - ALUResult [31:0]  -->  The address of the data to be read/written from Data Memory.
-    - WriteData [31:0]  -->  Data to write to Data Memory.
+  | imm_src |  Type  |
+  | :-----: | :----: |
+  | 3'b000  | I-Type |
+  | 3'b001  | S-Type |
+  | 3'b010  | B-Type |
+  | 3'b011  | U-Type |
+  | 3'b100  | J-Type |
 
-### Controller
+4. Add support for auipc
+   - add a mux to src_a, choose between RegFile and pc
+   - rename alu_src to alu_src_b, add new control signal alu_src_a
 
-The Controller receives signal zero and parts of the instruction to decide the operation of each module.
+5. Add support for lui
 
-#### Interface
+   -  alu_src_a add new source 1'b0, for lui only
+   -  alu_src [1:0]
 
-- Input
-  - zero  -->  Whether the result of ALU is zero, used for conditional branching.
-  - Instr [31:0]
-- Output
-  - PCSrc   -->  Choose next PC between PC+4 and other branch.
-  - ImmSrc [1:0]  -->  Encode ImmExt according to the instruction type.
-  - ALUSrc  -->  Choose the source between reg and ImmExt before sending to ALU.
-  - ResultSrc  -->  Choose the data written to RegFile between ALUResult and data from memory.
-  - RegWrite  -->  Whether to write data to RegFile.
-  - MemWrite
-  - ALUControl [2:0]  -->  Decide the operation of ALU (add, sub, and, or).
+6. Add support for jalr
 
-### Datapath
+   - extend pc mux, add source alu_result
+   - mux result_src add source pc + 4 (write back to rd)
 
-Instructions are processed according to the control signals.
+7. Add support for jal
 
-#### Interface
+   - same as beq, jump to pc + Imm(label), which is PC Target
 
-- Input
-  - CLK
-  - Reset
-  - Instr [31:0]
-  - ReadData [31:0]
-  - PCSrc
-  - ImmSrc [1:0]
-  - ALUSrc
-  - ResultSrc
-  - RegWrite
-  - ALUControl [2:0]
-- Output
-  - PC [31:0]
-  - ALUResult [31:0]
-  - WriteData [31:0]
-  - zero
