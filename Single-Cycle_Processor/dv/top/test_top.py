@@ -8,8 +8,12 @@ import os
 async def verify(dut):
     if not os.path.exists("expected_regs.json"):
         raise FileNotFoundError("expected_regs.json not found!")
+    if not os.path.exists("expected_dmem.json"):
+        raise FileNotFoundError("expected_dmem.json not found!")
     with open("expected_regs.json", 'r') as f:
         expected_regs = json.load(f)
+    with open("expected_dmem.json", 'r') as f:
+        expected_dmem = json.load(f)
     
     cocotb.log.info("[Test] Start Simulation...")
 
@@ -18,6 +22,7 @@ async def verify(dut):
 
     cocotb.log.info("[Test] Checking Registers...")
 
+    # Check regs
     rf_handle = dut.dut.d_unit.rf.regs
 
     mismatch =  False
@@ -33,3 +38,16 @@ async def verify(dut):
         cocotb.log.info("PASS: All registers match golden model!")
     else:
         raise Exception("FAIL: Register mismatch detected!")
+    
+    # Check dmem
+    dmem_handle = dut.dut.d_unit.RAM
+    for addr_str, val in expected_dmem.items():
+        addr = int(addr_str)
+        word_addr = addr >> 2   # divided by 4
+        byte_offset = addr & 0x3    # the least 2 bits
+
+        rtl_word = int(dmem_handle[word_addr].value)
+        rtl_byte = (rtl_word >> (byte_offset * 8)) & 0xFF
+
+        if rtl_byte != val:
+            cocotb.log.error(f"DMem Mismatch at addr {addr}! Exp: {hex(val)}, Got: {hex(rtl_byte)}")
