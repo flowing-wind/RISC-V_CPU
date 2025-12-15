@@ -41,6 +41,32 @@ module datapath (
                     2'b11: mem_data_processed = {{24{read_data[31]}}, read_data[31:24]};
                 endcase
             end
+
+            // lbu
+            3'b100: begin
+                case (byte_offset)
+                    2'b00: mem_data_processed = {24'b0, read_data[7:0]};
+                    2'b01: mem_data_processed = {24'b0, read_data[15:8]};
+                    2'b10: mem_data_processed = {24'b0, read_data[23:16]};
+                    2'b11: mem_data_processed = {24'b0, read_data[31:24]};
+                endcase
+            end
+
+            // lh
+            3'b001: begin
+                if (byte_offset[1] == 0)    // low
+                    mem_data_processed = {{16{read_data[15]}}, read_data[15:0]};
+                else
+                    mem_data_processed = {{16{read_data[31]}}, read_data[31:16]};
+            end
+
+            // lhu
+            3'b101: begin
+                if (byte_offset[1] == 0)    // low
+                    mem_data_processed = {16'b0, read_data[15:0]};
+                else
+                    mem_data_processed = {16'b0, read_data[31:16]};
+            end
         endcase
     end
 
@@ -84,7 +110,7 @@ module datapath (
     always @( *) begin
         case (result_src)
             2'b00: result = alu_result;
-            2'b01: result = read_data;
+            2'b01: result = mem_data_processed;
             2'b10: result = pc_plus4;
             
             default: result = alu_result;
