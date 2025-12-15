@@ -152,8 +152,11 @@ class CPU_Model:
             res = self.pc + 4
             next_pc = self.pc + imm
 
+        # update reg and pc
+        if rd != 0 and res is not None:
+            self.regs[rd] = self.to_unsigned(res)
 
-        self.regs[rd] = res & 0xFFFFFFFF
+        self.pc = self.to_unsigned(next_pc)
 
 def generate_files(asm_file, json_file, num_instr=1023):
     cpu = CPU_Model()
