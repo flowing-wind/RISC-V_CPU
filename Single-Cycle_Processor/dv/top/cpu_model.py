@@ -112,8 +112,7 @@ class CPU_Model:
         # I-Type(3)
         elif op == 'jalr':
             res = self.pc + 4
-            next_pc = (val1 + imm) & ~1
-
+            next_pc = (val1 + imm) & ~1     # ignore LSB and set to 0
         # S-Type
         elif op == 'sb':
             self.mem_write(val1 + imm, 1, val2)
