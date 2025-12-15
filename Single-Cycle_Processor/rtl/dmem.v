@@ -8,6 +8,14 @@ module dmem (
     
     reg [31:0] RAM [63:0];
 
+    // init
+    integer i;
+    initial begin
+        for (i=0; i<64; i=i+1) begin
+            RAM[i] <= 32'b0;
+        end
+    end
+
     // Read mem
     assign rd = RAM[addr[31:2]];    // addr[1:0] points to byte, but we need a 32 bit word.
     

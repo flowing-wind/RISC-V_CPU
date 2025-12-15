@@ -35,12 +35,16 @@ async def verify(dut):
             mismatch = True
 
     if not mismatch:
-        cocotb.log.info("PASS: All registers match golden model!")
+        cocotb.log.info("PASS: All registers match model!")
     else:
         raise Exception("FAIL: Register mismatch detected!")
     
     # Check dmem
-    dmem_handle = dut.dut.d_unit.RAM
+    cocotb.log.info("[Test] Checking Data memory...")
+
+    dmem_handle = dut.dmem_unit.RAM
+
+    mismatch =  False
     for addr_str, val in expected_dmem.items():
         addr = int(addr_str)
         word_addr = addr >> 2   # divided by 4
@@ -51,3 +55,9 @@ async def verify(dut):
 
         if rtl_byte != val:
             cocotb.log.error(f"DMem Mismatch at addr {addr}! Exp: {hex(val)}, Got: {hex(rtl_byte)}")
+            mismatch = True
+    
+    if not mismatch:
+        cocotb.log.info("PASS: Data memory match model!")
+    else:
+        raise Exception("FAIL: Data memory mismatch detected!")

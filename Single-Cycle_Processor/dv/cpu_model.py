@@ -188,7 +188,7 @@ class CPU_Model:
         # eg: 4(x2)  -->  imm=4, rs1=2
         match = re.match(r'(-?\d+)\((.*?)\)', s)
         if match:
-            return int(match.group(1)), self.parse_reg(match.group(2))
+            return int(match.group(1), 0), self.parse_reg(match.group(2))
         return 0, 0
     
     def load_asm_file(self, filename):
@@ -196,7 +196,7 @@ class CPU_Model:
         self.pc = 0
         current_pc = 0
 
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             lines = f.readlines()
         
         for line in lines:
@@ -219,7 +219,7 @@ class CPU_Model:
             elif op in ['addi', 'andi', 'ori', 'xori', 'slti', 'sltiu', 'slli', 'srli', 'srai']:
                 rd = self.parse_reg(parts[1])
                 rs1 = self.parse_reg(parts[2])
-                imm = int(parts[3])
+                imm = int(parts[3], 0)
 
             # I-Type(2) + jalr
             elif op in ['lb', 'lh', 'lw', 'lbu', 'lhu', 'jalr']:
@@ -235,12 +235,12 @@ class CPU_Model:
             elif op in ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu']:
                 rs1 = self.parse_reg(parts[1])
                 rs2 = self.parse_reg(parts[2])
-                imm = int(parts[3])
+                imm = int(parts[3], 0)
             
             # U/J-Type
             elif op in ['lui', 'auipc', 'jal']:
                 rd = self.parse_reg(parts[1])
-                imm = int(parts[2])
+                imm = int(parts[2], 0)
             
             self.imem[current_pc] = (op, rd, rs1, rs2, imm)
             current_pc += 4
