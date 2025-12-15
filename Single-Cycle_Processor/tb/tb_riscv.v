@@ -34,6 +34,7 @@ module tb_riscv ();
         .we (mem_write),
         .addr (data_addr),
         .wd (write_data),
+        .funct3 (instr[14:12]),
 
         .rd (read_data)
     );

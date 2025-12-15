@@ -22,6 +22,27 @@ module datapath (
     wire [31:0] src_b;
     wire [31:0] rf_rd1;
     reg [31:0] result;
+    reg [31:0] mem_data_processed;  // for lb, lh, lbu, lhu
+    wire [2:0] funct3 = instr[14:12];
+    wire [1:0] byte_offset = alu_result[1:0];
+
+    // Load data logic
+    always @( *) begin
+        case (funct3)
+            // lw
+            3'b010: mem_data_processed = read_data;
+
+            // lb
+            3'b000: begin
+                case (byte_offset)
+                    2'b00: mem_data_processed = {{24{read_data[7]}}, read_data[7:0]};
+                    2'b01: mem_data_processed = {{24{read_data[15]}}, read_data[15:8]};
+                    2'b10: mem_data_processed = {{24{read_data[23]}}, read_data[23:16]};
+                    2'b11: mem_data_processed = {{24{read_data[31]}}, read_data[31:24]};
+                endcase
+            end
+        endcase
+    end
 
     // PC Logic
     always @(posedge clk or posedge reset) begin

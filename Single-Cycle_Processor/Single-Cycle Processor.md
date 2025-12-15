@@ -79,5 +79,7 @@
 
 
 
+12.15 update:
 
-
+1. Fix lb, lh, sb, sh
+   - pass funct3 to dmem
