@@ -81,14 +81,15 @@ INSTR_DB = {
 }
 # =================================================================================================================
 
-def assemble(asm_file, hex_file):
+def assemble(asm_file, bin_file):
     try:
         with open(asm_file, 'r', encoding='utf-8') as f: lines = f.readlines()
     except FileNotFoundError:
         print(f"Error: {asm_file} not found.")
         return
     
-    output_hex = []
+    output_bytes = bytearray()
+    instruction_count = 0
 
     for i, line in enumerate(lines):
         line = line.split('#')[0].split('//')[0].strip() # 支持两种注释
@@ -188,12 +189,13 @@ def assemble(asm_file, hex_file):
             continue
 
         if bin_code:
-            hex_val = f"{int(bin_code, 2):08x}"
-            output_hex.append(hex_val)
+            val = int(bin_code, 2)
+            output_bytes.extend(val.to_bytes(4, byteorder='little'))
+            instruction_count += 1
 
-    with open(hex_file, 'w') as f:
-        f.write('\n'.join(output_hex))
-    print(f"[Asm] Assembled {len(output_hex)} instructions to {hex_file}")
+    with open(bin_file, 'wb') as f:
+        f.write(output_bytes)
+    print(f"[Asm] Assembled {instruction_count} instructions ({len(output_bytes)} bytes) to {bin_file}")
 
 if __name__ == "__main__":
     if len(sys.argv) >= 3:
@@ -201,5 +203,5 @@ if __name__ == "__main__":
         output_file = sys.argv[2] # dv/instr.txt)
         assemble(input_file, output_file)
     else:
-        print("[Asm] No args provided, using default 'instr.asm' -> 'instr.txt'")
-        assemble("instr.asm", "instr.txt")
+        print("[Asm] No args provided, using default 'instr.asm' -> 'main.bin'")
+        assemble("instr.asm", "main.bin")

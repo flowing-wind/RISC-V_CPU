@@ -7,5 +7,5 @@ sim_build/
 *.vcd
 results.xml
 *.asm
-*.txt
+*.bin
 *.json

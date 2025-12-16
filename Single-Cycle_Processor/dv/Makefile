@@ -13,26 +13,26 @@ TOPLEVEL = tb_riscv
 COCOTB_TEST_MODULES = test_top   
 
 ASM_SRC = instr.asm
-HEX_FILE = instr.txt
+BIN_FILE = main.bin
 EXP_REGS = expected_regs.json
 EXP_DMEM = expected_dmem.json
 
-.PHONY: run_test gen compile_hex cleanup
+.PHONY: run_test gen compile_asm cleanup
 
-run_test: cleanup gen compile_hex
+run_test: cleanup gen compile_asm
 	$(MAKE) sim
 
 gen:
 	@echo "[Model] Running Python Golden Model..."
 	python cpu_model.py
 
-compile_hex:
-	@echo "[ASM] Compiling Assembly to Hex..."
-	python $(ASM_SCRIPT) $(ASM_SRC) $(HEX_FILE)
+compile_asm:
+	@echo "[ASM] Compiling Assembly to Binary..."
+	python $(ASM_SCRIPT) $(ASM_SRC) $(BIN_FILE)
 
 cleanup:
 	@echo "[Clean] Removing temporary files..."
-	rm -f $(HEX_FILE) $(EXP_REGS) $(EXP_DMEM) results.xml wave.vcd
+	rm -f $(BIN_FILE) $(EXP_REGS) $(EXP_DMEM) results.xml wave.vcd
 	rm -rf sim_build/
 	rm -rf __pycache__
 
