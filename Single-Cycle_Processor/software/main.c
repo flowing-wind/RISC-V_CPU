@@ -1,20 +1,24 @@
 /* main.c */
 
-#define RESULT_ADDR ((volatile int*)0x2000)
+#define LED_ADDR 0x80000000
+#define LED_REG  (*((volatile int*)LED_ADDR))
+
+void delay(int count) {
+    volatile int i = 0;
+    while (i < count) {
+        i ++;
+    }
+}
 
 int main() {
-    int a = 10;
-    int b = 20;
-    int c = 0;
+    int counter = 0;
+    while (1) {
+        LED_REG = 1;
+        delay(500000);
 
-    c = a + b;
-    c = c + 5;
-
-    *RESULT_ADDR = c;
-
-    while (1){
-        // pass
+        LED_REG = 0;
+        delay(500000);
     }
-
+    
     return 0;
 }

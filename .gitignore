@@ -12,3 +12,4 @@ results.xml
 
 *.elf
 *.hex
+*.c

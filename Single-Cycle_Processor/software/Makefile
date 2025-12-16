@@ -35,6 +35,6 @@ wave:
 	gtkwave $(SIM_DIR)/wave.vcd
 
 clean:
-		rm -f *.elf *.bin *.asm *.hex
+		rm -f main.elf main.bin main.asm main.hex
 		rm -rf $(SIM_DIR)
 		
