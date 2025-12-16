@@ -16,6 +16,9 @@ main.elf: start.S main.c link.ld
 main.bin: main.elf
 		$(OBJCOPY) -O binary main.elf main.bin
 
+main.hex: main.elf
+		$(OBJCOPY) -O verilog --verilog-data-width=4 main.elf main.hex
+
 main.asm: main.elf
 		$(OBJDUMP) -D main.elf > main.asm
 
@@ -32,6 +35,6 @@ wave:
 	gtkwave $(SIM_DIR)/wave.vcd
 
 clean:
-		rm -f *.elf *.bin *.asm
+		rm -f *.elf *.bin *.asm *.hex
 		rm -rf $(SIM_DIR)
 		
