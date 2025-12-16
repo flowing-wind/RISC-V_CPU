@@ -273,10 +273,12 @@ class CPU_Model:
 if __name__ == "__main__":
     cpu = CPU_Model()
 
-    asm_file = "instr.asm"
+    asm_file = "main.asm"
     if not os.path.exists(asm_file):
         print(f"Error: {asm_file} not found.")
 
     cpu.load_asm_file(asm_file)
     cpu.run()
     cpu.dump_results()
+
+    

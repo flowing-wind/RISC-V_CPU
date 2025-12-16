@@ -9,3 +9,5 @@ results.xml
 *.asm
 *.bin
 *.json
+
+*.elf

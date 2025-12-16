@@ -47,7 +47,7 @@ async def verify(dut):
     mismatch =  False
     for addr_str, val in expected_dmem.items():
         addr = int(addr_str)
-        word_addr = addr >> 2   # divided by 4
+        word_addr = addr >> 2 & 0x3FF  # divided by 4
         byte_offset = addr & 0x3    # the least 2 bits
 
         rtl_word = int(dmem_handle[word_addr].value)

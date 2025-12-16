@@ -12,7 +12,7 @@ VERILOG_SOURCES += $(wildcard $(RTL_DIR)/*.v) $(wildcard $(PROJ_DIR)/tb/*.v)
 TOPLEVEL = tb_riscv
 COCOTB_TEST_MODULES = test_top   
 
-ASM_SRC = instr.asm
+ASM_SRC = main.asm
 BIN_FILE = main.bin
 EXP_REGS = expected_regs.json
 EXP_DMEM = expected_dmem.json

@@ -204,4 +204,4 @@ if __name__ == "__main__":
         assemble(input_file, output_file)
     else:
         print("[Asm] No args provided, using default 'instr.asm' -> 'main.bin'")
-        assemble("instr.asm", "main.bin")
+        assemble("main.asm", "main.bin")
