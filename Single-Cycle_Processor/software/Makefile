@@ -5,7 +5,10 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 
 CFLAGS = -march=rv32i -mabi=ilp32 -nostdlib -g
 
-all: main.bin main.asm
+RTL_SRC = $(wildcard ../rtl/*.v) $(wildcard ../tb/*.v)
+SIM_DIR = sim
+
+all: run
 
 main.elf: start.S main.c link.ld
 		$(CC) $(CFLAGS) -T link.ld start.S main.c -o main.elf
@@ -16,6 +19,19 @@ main.bin: main.elf
 main.asm: main.elf
 		$(OBJDUMP) -D main.elf > main.asm
 
+run: clean main.bin
+	@echo "--- Preparing Simulation Directory ---"
+	mkdir -p $(SIM_DIR)
+	@echo "--- Compiling RTL ---"
+	iverilog -o $(SIM_DIR)/cpu_sim.out $(RTL_SRC)
+	@echo "--- Running Simulation ---"
+
+	vvp $(SIM_DIR)/cpu_sim.out
+
+wave:
+	gtkwave $(SIM_DIR)/wave.vcd
+
 clean:
 		rm -f *.elf *.bin *.asm
+		rm -rf $(SIM_DIR)
 		
