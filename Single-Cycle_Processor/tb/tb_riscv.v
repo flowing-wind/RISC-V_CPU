@@ -44,47 +44,47 @@ module tb_riscv ();
         #5 clk = ~clk;  // T = 10ns
     end
 
-    integer log_file;
-    integer i;
+    // integer log_file;
+    // integer i;
 
     // Test process
     initial begin
-        $dumpfile("sim/wave.vcd");
-        $dumpvars(0, tb_riscv);
+        // $dumpfile("sim/wave.vcd");
+        // $dumpvars(0, tb_riscv);
 
-        log_file = $fopen("sim/result.log", "w");
-        if (log_file == 0) begin
-            $display("Error: Could not open sim/result.log.");
-            $finish;
-        end
+        // log_file = $fopen("sim/result.log", "w");
+        // if (log_file == 0) begin
+        //     $display("Error: Could not open sim/result.log.");
+        //     $finish;
+        // end
         
         // init
         clk = 0;
         reset = 1;
         #20 reset = 0;
 
-        #50000;
+        // #50000;
 
-        $fdisplay(log_file, "================ FINAL REGISTER STATE ================");
-        for (i = 0; i < 32; i = i + 1) begin
-            $fdisplay(log_file, "x%0d  = %h (%0d)", i, dut.d_unit.rf.regs[i], $signed(dut.d_unit.rf.regs[i]));
-        end
+        // $fdisplay(log_file, "================ FINAL REGISTER STATE ================");
+        // for (i = 0; i < 32; i = i + 1) begin
+        //     $fdisplay(log_file, "x%0d  = %h (%0d)", i, dut.d_unit.rf.regs[i], $signed(dut.d_unit.rf.regs[i]));
+        // end
 
-        $fdisplay(log_file, "\n================ FINAL MEMORY STATE (0x2000) ================");
-        for (i = 0; i < 10; i = i + 1) begin
-            $fdisplay(log_file, "Mem[%0d] = %h", i, dmem_unit.RAM[i]);
-        end
+        // $fdisplay(log_file, "\n================ FINAL MEMORY STATE (0x2000) ================");
+        // for (i = 0; i < 10; i = i + 1) begin
+        //     $fdisplay(log_file, "Mem[%0d] = %h", i, dmem_unit.RAM[i]);
+        // end
 
-        $fclose(log_file);
-        $display("Simulation finished. Results saved to sim/result.log and sim/wave.vcd");
-        $finish;
+        // $fclose(log_file);
+        // $display("Simulation finished. Results saved to sim/result.log and sim/wave.vcd");
+        // $finish;
 
     end
 
-    always @(negedge clk ) begin
-        if (mem_write)
-             $display("Write data %h to dmem address %h.", write_data, data_addr);
-    end
+    // always @(negedge clk ) begin
+    //     if (mem_write)
+    //          $display("Write data %h to dmem address %h.", write_data, data_addr);
+    // end
     
 endmodule
 
