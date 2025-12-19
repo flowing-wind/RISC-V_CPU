@@ -11,15 +11,16 @@ module datapath (
     // Hazard Unit Interface
     input wire Stall_F, Stall_D, Flush_D, Flush_E,
     input wire [1:0] ForwardA_E, ForwardB_E,
-    output wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H,
+    output wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M_H, Rd_W_H,
     output wire [1:0] PC_Src_E_H,
+    output wire ResultSrc_E_0_H, RegWrite_M_H,  RegWrite_W_H,
 
     // Imem Interface
     output wire [31:0] PC,
     input wire [31:0] Instr,
 
     // Dmem Interface
-    output wire MemWrite_EN,        // The MemWrite_EN is MemWrite_M, not MemWrite
+    output wire [3:0] MemWrite_EN,  // The MemWrite_EN is MemWrite_M(expanded), not MemWrite
     output wire [31:0] MemAddr,     // Data address in dmem
     output wire [31:0] WriteData,   // Data written to dmem
     input wire [31:0] ReadData      // Data read from dmem
@@ -65,6 +66,9 @@ module datapath (
     reg [2:0] Funct3_M;
     reg [4:0] Rd_M;
     reg [31:0] WriteData_M, PC_Plus4_M;
+    reg [31:0] WriteData_Aligned_M;
+    reg [3:0] Byte_Enable;
+    wire [1:0] Addr_Offset = ALU_Result_M[1:0];
 
     // W
     reg RegWrite_W;
@@ -100,7 +104,12 @@ module datapath (
     assign Rs1_E_H = Rs1_E;
     assign Rs2_E_H = Rs2_E;
     assign Rd_E_H = Rd_E;
+    assign Rd_M_H = Rd_M;
+    assign Rd_W_H = Rd_W;
     assign PC_Src_E_H = PC_Src_E;
+    assign ResultSrc_E_0_H = ResultSrc_E[0];
+    assign RegWrite_M_H = RegWrite_M;
+    assign RegWrite_W_H = RegWrite_W;
 
 
     // ================================================
@@ -345,9 +354,53 @@ module datapath (
     // 4. Memory Stage (M)
     // ================================================
     // Dmem Interface
-    assign MemWrite_EN = MemWrite_M;
+    always @( *) begin
+        case (Funct3_M)
+            3'b000: begin   // sb
+                case (Addr_Offset)
+                    2'b00: begin
+                        WriteData_Aligned_M = {24'b0, WriteData_M[7:0]};
+                        Byte_Enable = 4'b0001;
+                    end
+                    2'b01: begin
+                        WriteData_Aligned_M = {16'b0, WriteData_M[7:0], 8'b0};
+                        Byte_Enable = 4'b0010;
+                    end
+                    2'b10: begin
+                        WriteData_Aligned_M = {8'b0, WriteData_M[7:0], 16'b0};
+                        Byte_Enable = 4'b0100;
+                    end
+                    2'b11: begin
+                        WriteData_Aligned_M = {WriteData_M[7:0], 24'b0};
+                        Byte_Enable = 4'b1000;
+                    end
+                endcase
+            end
+            3'b001: begin   // sh
+                if (Addr_Offset[1] == 0) begin
+                    WriteData_Aligned_M = {16'b0, WriteData_M[15:0]};
+                    Byte_Enable = 4'b0011;
+                end
+                else begin
+                    WriteData_Aligned_M = {WriteData_M[15:0], 16'b0};
+                    Byte_Enable = 4'b1100;
+                end
+            end
+            3'b010: begin   // sw
+                WriteData_Aligned_M = WriteData_M;
+                Byte_Enable = 4'b1111;
+            end
+
+            default: begin
+                WriteData_Aligned_M = WriteData_M;
+                Byte_Enable = 4'b0000;
+            end     
+        endcase
+    end
+
+    assign MemWrite_EN = (MemWrite_M) ? Byte_Enable : 4'b0000;
     assign MemAddr = ALU_Result_M;
-    assign WriteData = WriteData_M;
+    assign WriteData = WriteData_Aligned_M;
 
 
     // ================================================
@@ -379,7 +432,7 @@ module datapath (
     // 5. Writeback Stage (W)
     // ================================================
     // Load data logic
-    // BRAM is async, should be processed in WB Stage
+    // BRAM is sync, should be processed in WB Stage
     assign ReadData_W = ReadData;
 
     always @( *) begin
