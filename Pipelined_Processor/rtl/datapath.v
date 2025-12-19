@@ -30,7 +30,7 @@ module datapath (
     // Wires and Regs
     // ================================================
     // F
-    reg [31:0] PC_F, PC_Next_F;
+    reg [31:0] PC_F, PC_Next_F, PC_F_r;     // To wait BRAM, a reg for PC is needed
     wire [31:0] PC_Plus4_F, PC_Target_E, ALU_Result_E;
     wire [31:0] Instr_F;
 
@@ -120,22 +120,26 @@ module datapath (
     assign Instr_F = Instr;
 
     always @(posedge clk or posedge reset) begin
-        if (reset)
+        if (reset) begin
             PC_F <= 32'b0;
-        else if (!Stall_F)
+            PC_F_r <= 32'b0;
+        end
+        else if (!Stall_F) begin
             PC_F <= PC_Next_F;
+            PC_F_r <= PC_F;
+        end
     end
 
-    assign PC_Plus4_F = PC_F + 32'd4;
+    assign PC_Plus4_F = PC_F_r + 32'd4;     // This is only used by jal / jalr
 
     // PC MUX
     always @( *) begin
         case (PC_Src_E)
-            2'b00: PC_Next_F = PC_Plus4_F;
+            2'b00: PC_Next_F = PC_F + 32'd4;    // This acts as source of pc_next
             2'b01: PC_Next_F = PC_Target_E;
             2'b10: PC_Next_F = ALU_Result_E;
 
-            default: PC_Next_F = PC_Plus4_F;
+            default: PC_Next_F = PC_F + 32'd4;
         endcase
     end
 
@@ -156,7 +160,7 @@ module datapath (
         end
         else if (!Stall_D) begin
             Instr_D <= Instr_F;
-            PC_D <= PC_F;
+            PC_D <= PC_F_r;
             PC_Plus4_D <= PC_Plus4_F;
         end
     end
