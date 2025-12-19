@@ -1,7 +1,6 @@
 module top(
     input sys_clk,
-    input sys_rst_n,
-    output led
+    input sys_rst_n
     );
 
     wire locked;
@@ -20,13 +19,13 @@ module top(
 
         .MemWrite_EN (MemWrite_EN),
         .MemAddr (MemAddr),
-        .WriteData (),
-        .ReadData ()
+        .WriteData (WriteData),
+        .ReadData (ReadData)
     );
 
     clk_wiz_0 clk_wiz (
         .clk_in1 (sys_clk),
-        .reset (reset),
+        .reset (~sys_rst_n),
         .locked (locked),
         .clk_out1 (clk_core)
     );

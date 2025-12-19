@@ -84,15 +84,15 @@ module datapath (
     // ================================================
     // Control Unit Interface
     // ================================================
-    assign RegWrite = RegWrite_D;
-    assign MemWrite = MemWrite_D;
-    assign Branch = Branch_D;
-    assign ALUSrc_b = ALUSrc_b_D;
-    assign Jump = Jump_D;
-    assign ResultSrc = ResultSrc_D;
-    assign ALUSrc_a = ALUSrc_a_D;
-    assign ALU_Control = ALU_Control_D;
-    assign ImmSrc = ImmSrc_D;
+    assign RegWrite_D = RegWrite;
+    assign MemWrite_D = MemWrite;
+    assign Branch_D = Branch;
+    assign ALUSrc_b_D = ALUSrc_b;
+    assign Jump_D = Jump;
+    assign ResultSrc_D = ResultSrc;
+    assign ALUSrc_a_D = ALUSrc_a;
+    assign ALU_Control_D = ALU_Control;
+    assign ImmSrc_D = ImmSrc;
     assign Instr_D_out = Instr_D;
 
 
