@@ -12,8 +12,8 @@ module reg_file (
     reg [31:0] regs [31:0];
 
     // Read RefFile
-    assign RD1 = (|A1) ? regs[A1] : 32'b0;
-    assign RD2 = (|A2) ? regs[A2] : 32'b0;
+    assign RD1 = (WE3 && (A1 == A3) && (|A1)) ? WD3 : ((|A1) ? regs[A1] : 32'b0);
+    assign RD2 = (WE3 && (A2 == A3) && (|A2)) ? WD3 : ((|A2) ? regs[A2] : 32'b0);
 
     // Write Reg
     integer i;
