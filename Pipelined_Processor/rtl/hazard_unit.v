@@ -2,7 +2,7 @@ module hazard_unit (
     input wire clk, reset,
     input wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M_H, Rd_W_H,
     input wire [1:0] PC_Src_E_H,
-    input wire ResultSrc_E_0_H, RegWrite_M_H,  RegWrite_W_H,
+    input wire ResultSrc_E_0_H, ResultSrc_M_0_H, RegWrite_M_H, RegWrite_W_H,
 
     output wire Stall_F, Stall_D, Flush_D, Flush_E,
     output wire [1:0] ForwardA_E, ForwardB_E
@@ -35,8 +35,9 @@ module hazard_unit (
     end
 
     // Stall  -->  Load Hazard
-    assign lwStall = (ResultSrc_E_0_H && ((Rs1_D_H == Rd_E_H) || (Rs2_D_H == Rd_E_H)));
-    assign Stall_F = lwStall;
+    assign lwStall = (ResultSrc_E_0_H && (Rd_E_H != 5'b0) && ((Rs1_D_H == Rd_E_H) || (Rs2_D_H == Rd_E_H))) ||
+                     (ResultSrc_M_0_H && (Rd_M_H != 5'b0) && ((Rs1_D_H == Rd_M_H) || (Rs2_D_H == Rd_M_H)));
+    assign Stall_F = lwStall && (PC_Src_E_H == 2'b00);
     assign Stall_D = lwStall;
 
     // Flush  -->  Branch Taken

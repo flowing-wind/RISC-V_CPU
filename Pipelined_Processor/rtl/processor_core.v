@@ -28,7 +28,7 @@ module processor_core(
     wire [1:0] ForwardA_E, ForwardB_E;
     wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M_H, Rd_W_H;
     wire [1:0] PC_Src_E_H;
-    wire ResultSrc_E_0_H, RegWrite_M_H,  RegWrite_W_H;
+    wire ResultSrc_E_0_H, ResultSrc_M_0_H, RegWrite_M_H, RegWrite_W_H;
 
 
     // ===================================================
@@ -81,6 +81,7 @@ module processor_core(
         .Rd_W_H (Rd_W_H),
         .PC_Src_E_H (PC_Src_E_H),
         .ResultSrc_E_0_H (ResultSrc_E_0_H),
+        .ResultSrc_M_0_H (ResultSrc_M_0_H),
         .RegWrite_M_H (RegWrite_M_H),
         .RegWrite_W_H (RegWrite_W_H),
 
@@ -114,6 +115,7 @@ module processor_core(
         .Rd_W_H (Rd_W_H),
         .PC_Src_E_H (PC_Src_E_H),
         .ResultSrc_E_0_H (ResultSrc_E_0_H),
+        .ResultSrc_M_0_H (ResultSrc_M_0_H),
         .RegWrite_M_H (RegWrite_M_H),
         .RegWrite_W_H (RegWrite_W_H)
     );

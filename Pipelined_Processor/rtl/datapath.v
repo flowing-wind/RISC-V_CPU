@@ -13,7 +13,7 @@ module datapath (
     input wire [1:0] ForwardA_E, ForwardB_E,
     output wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M_H, Rd_W_H,
     output wire [1:0] PC_Src_E_H,
-    output wire ResultSrc_E_0_H, RegWrite_M_H,  RegWrite_W_H,
+    output wire ResultSrc_E_0_H, ResultSrc_M_0_H, RegWrite_M_H, RegWrite_W_H,
 
     // Imem Interface
     output wire [31:0] PC,
@@ -108,6 +108,7 @@ module datapath (
     assign Rd_W_H = Rd_W;
     assign PC_Src_E_H = PC_Src_E;
     assign ResultSrc_E_0_H = ResultSrc_E[0];
+    assign ResultSrc_M_0_H = ResultSrc_M[0];
     assign RegWrite_M_H = RegWrite_M;
     assign RegWrite_W_H = RegWrite_W;
 
