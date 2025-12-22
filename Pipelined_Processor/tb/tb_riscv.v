@@ -39,13 +39,13 @@ module tb_riscv ();
     // load testcase
     initial begin
         // vivado sim
-        // $readmemh("add.hex", dut.imem.inst.native_mem_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-add.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
 
         // iverilog sim
-        $readmemh("rv32ui-p-tests/hex/rv32ui-p-add.hex", dut.imem.ram);
+        // $readmemh("rv32ui-p-tests/hex/rv32ui-p-add.hex", dut.imem.ram);
 
-        $dumpfile("sim/sim.vcd");
-        $dumpvars(0, tb_riscv);
+        // $dumpfile("sim/sim.vcd");
+        // $dumpvars(0, tb_riscv);
     end
 
 endmodule
