@@ -48,7 +48,7 @@ module top(
         .clka (clk_core),
         .ena (~reset),
         .wea (1'b0),    // instr read only
-        .addra (PC[11:2]),
+        .addra (PC),
         .dina (32'b0),
         .douta (Instr)
     );
@@ -58,7 +58,7 @@ module top(
         .clka (clk_core),
         .ena (~reset),
         .wea (MemWrite_EN),
-        .addra (MemAddr[11:2]),
+        .addra (MemAddr),
         .dina (WriteData),
         .douta (ReadData)
     );
