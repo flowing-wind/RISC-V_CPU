@@ -22,11 +22,16 @@ module tb_riscv ();
     // Reset
     initial begin
         sys_rst_n = 0;
-        #100;
+        #20;
         sys_rst_n = 1;
 
-        #200000;
+        #20000;
         $stop;
+    end
+
+    // load testcase
+    initial begin
+        $readmemh("add.hex", dut.imem.inst.native_mem_module.blk_mem_gen_v8_4_12_inst.memory);
     end
 
 endmodule
