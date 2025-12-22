@@ -3,8 +3,22 @@ module top(
     input sys_rst_n
     );
 
+    // Generate reset signal
     wire locked;
-    wire reset = ~sys_rst_n || ~locked;
+    wire async_reset_n = sys_rst_n && locked;
+    reg [1:0] rst_sync_n;
+
+    always @(posedge clk_core or negedge async_reset_n) begin
+        if (!async_reset_n) begin
+            rst_sync_n <= 2'b00;
+        end
+        else begin
+            rst_sync_n <= {rst_sync_n[0], 1'b1};
+        end
+    end
+
+    assign reset = ~rst_sync_n[1];  // eff at 1
+
     
     // ===========================================================
     wire [31:0] PC, Instr, MemAddr, WriteData, ReadData;
