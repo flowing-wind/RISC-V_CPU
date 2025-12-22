@@ -10,7 +10,7 @@ module tb_riscv ();
         .sys_rst_n (sys_rst_n)
     );
 
-    // debug
+    // debug for gtkwave
     wire [31:0] debug_gp = dut.cpu.d_unit.rf.regs[3];
     wire [31:0] debug_a1 = dut.cpu.d_unit.rf.regs[11];
     wire [31:0] debug_a2 = dut.cpu.d_unit.rf.regs[12];
@@ -38,7 +38,10 @@ module tb_riscv ();
 
     // load testcase
     initial begin
+        // vivado sim
         // $readmemh("add.hex", dut.imem.inst.native_mem_module.blk_mem_gen_v8_4_12_inst.memory);
+
+        // iverilog sim
         $readmemh("rv32ui-p-tests/hex/rv32ui-p-add.hex", dut.imem.ram);
 
         $dumpfile("sim/sim.vcd");
