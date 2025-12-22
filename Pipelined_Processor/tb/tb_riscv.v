@@ -12,6 +12,10 @@ module tb_riscv ();
 
     // debug
     wire [31:0] debug_gp = dut.cpu.d_unit.rf.regs[3];
+    wire [31:0] debug_a1 = dut.cpu.d_unit.rf.regs[11];
+    wire [31:0] debug_a2 = dut.cpu.d_unit.rf.regs[12];
+    wire [31:0] debug_a4 = dut.cpu.d_unit.rf.regs[14];
+    wire [31:0] debug_t2 = dut.cpu.d_unit.rf.regs[7];
 
     // Generate clock, T = 20ns
     initial begin
