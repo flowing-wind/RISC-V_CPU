@@ -25,13 +25,17 @@ module tb_riscv ();
         #20;
         sys_rst_n = 1;
 
-        #20000;
-        $stop;
+        #10000;
+        $finish;
     end
 
     // load testcase
     initial begin
-        $readmemh("add.hex", dut.imem.inst.native_mem_module.blk_mem_gen_v8_4_12_inst.memory);
+        // $readmemh("add.hex", dut.imem.inst.native_mem_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-tests/hex/rv32ui-p-add.hex", dut.imem.ram);
+
+        $dumpfile("sim/sim.vcd");
+        $dumpvars(0, tb_riscv);
     end
 
 endmodule
