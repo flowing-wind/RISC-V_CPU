@@ -96,6 +96,9 @@ module processor_core(
     );
 
     hazard_unit h_unit (
+        .clk (clk),
+        .reset (reset),
+        
         .Stall_F (Stall_F),
         .Stall_D (Stall_D),
         .Flush_D (Flush_D),
