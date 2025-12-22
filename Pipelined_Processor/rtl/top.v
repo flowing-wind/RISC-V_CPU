@@ -46,7 +46,7 @@ module top(
 
     INSTR_MEM imem (
         .clka (clk_core),
-        .ena (~reset),
+        .ena (rst_sync_n[0]),
         .wea (1'b0),    // instr read only
         .addra (PC),
         .dina (32'b0),
@@ -56,7 +56,7 @@ module top(
     // DMEM
     DATA_MEM dmem (
         .clka (clk_core),
-        .ena (~reset),
+        .ena (rst_sync_n[0]),
         .wea (MemWrite_EN),
         .addra (MemAddr),
         .dina (WriteData),
