@@ -32,7 +32,7 @@ module top(
 
     INSTR_MEM imem (
         .clka (clk_core),
-        .ena (1'b1),
+        .ena (~reset),
         .wea (1'b0),    // instr read only
         .addra (PC[11:2]),
         .dina (32'b0),
@@ -42,7 +42,7 @@ module top(
     // DMEM
     DATA_MEM dmem (
         .clka (clk_core),
-        .ena (1'b1),
+        .ena (~reset),
         .wea (MemWrite_EN),
         .addra (MemAddr[11:2]),
         .dina (WriteData),
