@@ -6,6 +6,7 @@ module top(
     // Generate reset signal
     wire locked;
     wire async_reset_n = sys_rst_n && locked;
+    wire reset;
     reg [1:0] rst_sync_n;
 
     always @(posedge clk_core or negedge async_reset_n) begin
