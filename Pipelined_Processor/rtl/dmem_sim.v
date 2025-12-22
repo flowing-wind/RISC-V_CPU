@@ -2,7 +2,7 @@ module DATA_MEM (
     input  wire clka,
     input  wire ena,
     input  wire [3:0] wea, // 字节写使能
-    input  wire [9:0] addra,
+    input  wire [31:0] addra,
     input  wire [31:0] dina,
     output reg  [31:0] douta
 );
