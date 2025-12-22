@@ -9,6 +9,6 @@ module clk_wiz_0 (
     initial locked = 0;
     always @(posedge clk_in1 or posedge reset) begin
         if (reset) locked <= 0;
-        else       #100 locked <= 1; // 模拟 PLL 锁定延迟
+        else    locked <= 1; // 模拟 PLL 锁定延迟
     end
 endmodule

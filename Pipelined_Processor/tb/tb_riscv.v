@@ -10,6 +10,9 @@ module tb_riscv ();
         .sys_rst_n (sys_rst_n)
     );
 
+    // debug
+    wire [31:0] debug_gp = dut.cpu.d_unit.rf.regs[3];
+
     // Generate clock, T = 20ns
     initial begin
         sys_clk = 0;
