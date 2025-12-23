@@ -15,31 +15,31 @@
   - fence_i no longer belongs to RV32I, skip
 - [x] rv32ui-p-jal
 - [x] rv32ui-p-jalr
-- [ ] rv32ui-p-lb
-- [ ] rv32ui-p-lbu
-- [ ] rv32ui-p-ld_st
-- [ ] rv32ui-p-lh
-- [ ] rv32ui-p-lhu
-- [ ] rv32ui-p-lui
-- [ ] rv32ui-p-lw
+- [x] rv32ui-p-lb
+- [x] rv32ui-p-lbu
+- [x] rv32ui-p-ld_st
+- [x] rv32ui-p-lh
+- [x] rv32ui-p-lhu
+- [x] rv32ui-p-lui
+- [x] rv32ui-p-lw
 - [ ] rv32ui-p-ma_data
-- [ ] rv32ui-p-or
-- [ ] rv32ui-p-ori
-- [ ] rv32ui-p-sb
-- [ ] rv32ui-p-sh
-- [ ] rv32ui-p-simple
-- [ ] rv32ui-p-sll
-- [ ] rv32ui-p-slli
-- [ ] rv32ui-p-slt
-- [ ] rv32ui-p-slti
-- [ ] rv32ui-p-sltiu
-- [ ] rv32ui-p-sltu
-- [ ] rv32ui-p-sra
-- [ ] rv32ui-p-srai
-- [ ] rv32ui-p-srl
-- [ ] rv32ui-p-srli
-- [ ] rv32ui-p-st_ld
-- [ ] rv32ui-p-sub
-- [ ] rv32ui-p-sw
-- [ ] rv32ui-p-xor
-- [ ] rv32ui-p-xori
+- [x] rv32ui-p-or
+- [x] rv32ui-p-ori
+- [x] rv32ui-p-sb
+- [x] rv32ui-p-sh
+- [x] rv32ui-p-simple
+- [x] rv32ui-p-sll
+- [x] rv32ui-p-slli
+- [x] rv32ui-p-slt
+- [x] rv32ui-p-slti
+- [x] rv32ui-p-sltiu
+- [x] rv32ui-p-sltu
+- [x] rv32ui-p-sra
+- [x] rv32ui-p-srai
+- [x] rv32ui-p-srl
+- [x] rv32ui-p-srli
+- [x] rv32ui-p-st_ld
+- [x] rv32ui-p-sub
+- [x] rv32ui-p-sw
+- [x] rv32ui-p-xor
+- [x] rv32ui-p-xori
