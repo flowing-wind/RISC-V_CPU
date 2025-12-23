@@ -39,9 +39,9 @@ module tb_riscv ();
     // load testcase
     initial begin
         // vivado sim
-        $readmemh("rv32ui-p-lb.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-add.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
         // tmp for test of dmem
-        $readmemh("rv32ui-p-lb.hex", dut.dmem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-add.hex", dut.dmem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
 
         // iverilog sim
         // $readmemh("rv32ui-p-tests/hex/rv32ui-p-add.hex", dut.imem.ram);

@@ -1,10 +1,10 @@
 module hazard_unit (
     input wire clk, reset,
-    input wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M_H, Rd_W_H,
+    input wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M1_H, Rd_M2_H, Rd_W_H,
     input wire [1:0] PC_Src_E_H,
-    input wire ResultSrc_E_0_H, ResultSrc_M_0_H, RegWrite_M_H, RegWrite_W_H,
+    input wire ResultSrc_E_0_H, ResultSrc_M1_0_H, ResultSrc_M2_0_H, RegWrite_M1_H, RegWrite_M2_H, RegWrite_W_H,
 
-    output wire Stall_F, Stall_D, Flush_D, Flush_E,
+    output wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E,
     output wire [1:0] ForwardA_E, ForwardB_E
 );
 
@@ -16,8 +16,10 @@ module hazard_unit (
 
     // ForwardA_E  -->  Data Hazard
     always @( *) begin
-        if (((Rs1_E_H == Rd_M_H) && RegWrite_M_H) && (Rs1_E_H != 0))
+        if (((Rs1_E_H == Rd_M1_H) && RegWrite_M1_H) && (Rs1_E_H != 0))
             ForwardA_E_r = 2'b10;
+        else if (((Rs1_E_H == Rd_M2_H) && RegWrite_M2_H) && (Rs1_E_H != 0))
+            ForwardA_E_r = 2'b11;
         else if (((Rs1_E_H == Rd_W_H) && RegWrite_W_H) && (Rs1_E_H != 0))
             ForwardA_E_r = 2'b01;
         else
@@ -26,8 +28,10 @@ module hazard_unit (
 
     // ForwardB_E
     always @( *) begin
-        if (((Rs2_E_H == Rd_M_H) && RegWrite_M_H) && (Rs2_E_H != 0))
+        if (((Rs2_E_H == Rd_M1_H) && RegWrite_M1_H) && (Rs2_E_H != 0))
             ForwardB_E_r = 2'b10;
+        else if (((Rs2_E_H == Rd_M2_H) && RegWrite_M2_H) && (Rs2_E_H != 0))
+            ForwardB_E_r = 2'b11;
         else if (((Rs2_E_H == Rd_W_H) && RegWrite_W_H) && (Rs2_E_H != 0))
             ForwardB_E_r = 2'b01;
         else
@@ -36,20 +40,13 @@ module hazard_unit (
 
     // Stall  -->  Load Hazard
     assign lwStall = (ResultSrc_E_0_H && (Rd_E_H != 5'b0) && ((Rs1_D_H == Rd_E_H) || (Rs2_D_H == Rd_E_H))) ||
-                     (ResultSrc_M_0_H && (Rd_M_H != 5'b0) && ((Rs1_D_H == Rd_M_H) || (Rs2_D_H == Rd_M_H)));
-    assign Stall_F = lwStall && (PC_Src_E_H == 2'b00);
+                     (ResultSrc_M1_0_H && (Rd_M1_H != 0) && ((Rs1_D_H == Rd_M1_H) || (Rs2_D_H == Rd_M1_H)));
+    assign Stall_F1 = lwStall;
+    assign Stall_F2 = lwStall;
     assign Stall_D = lwStall;
 
-    // Flush  -->  Branch Taken
-    reg flush_delay;    // Due to BRAM, we need to flush D again when branch taken
-    always @(posedge clk or posedge reset) begin
-        if (reset)
-            flush_delay <= 1'b0;
-        else
-            flush_delay <= (|PC_Src_E_H);
-    end
-
-    assign Flush_D = (|PC_Src_E_H) || flush_delay;
+    assign Flush_F2 = (|PC_Src_E_H);
+    assign Flush_D = (|PC_Src_E_H);
     assign Flush_E = (lwStall || (|PC_Src_E_H));
 
 endmodule

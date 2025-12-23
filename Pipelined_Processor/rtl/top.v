@@ -6,7 +6,7 @@ module top(
     // Generate reset signal
     wire locked;
     wire async_reset_n = sys_rst_n && locked;
-    wire reset;
+    wire reset, clk_core;
     reg [1:0] rst_sync_n;
 
     always @(posedge clk_core or negedge async_reset_n) begin
@@ -24,12 +24,14 @@ module top(
     // ===========================================================
     wire [31:0] PC, Instr, MemAddr, WriteData, ReadData;
     wire [3:0] MemWrite_EN;
+    wire Stall;
 
     processor_core cpu (
         .clk (clk_core),
         .reset (reset),
 
         .PC (PC),
+        .Stall (Stall),
         .Instr (Instr),
 
         .MemWrite_EN (MemWrite_EN),
@@ -47,7 +49,7 @@ module top(
 
     INSTR_MEM imem (
         .clka (clk_core),
-        .ena (rst_sync_n[0]),
+        .ena (rst_sync_n[0] & ~Stall),
         .wea (1'b0),    // instr read only
         .addra (PC),
         .dina (32'b0),

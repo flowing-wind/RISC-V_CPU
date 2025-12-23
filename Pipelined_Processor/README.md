@@ -13,8 +13,8 @@
 - [x] rv32ui-p-bne
 - [ ] ~~rv32ui-p-fence_i~~
   - fence_i no longer belongs to RV32I, skip
-- [ ] rv32ui-p-jal
-- [ ] rv32ui-p-jalr
+- [x] rv32ui-p-jal
+- [x] rv32ui-p-jalr
 - [ ] rv32ui-p-lb
 - [ ] rv32ui-p-lbu
 - [ ] rv32ui-p-ld_st

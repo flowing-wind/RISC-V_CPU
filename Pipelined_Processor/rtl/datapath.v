@@ -9,11 +9,11 @@ module datapath (
     output wire [31:0] Instr_D_out,
 
     // Hazard Unit Interface
-    input wire Stall_F, Stall_D, Flush_D, Flush_E,
+    input wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E,
     input wire [1:0] ForwardA_E, ForwardB_E,
-    output wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M_H, Rd_W_H,
+    output wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M1_H, Rd_M2_H, Rd_W_H,
     output wire [1:0] PC_Src_E_H,
-    output wire ResultSrc_E_0_H, ResultSrc_M_0_H, RegWrite_M_H, RegWrite_W_H,
+    output wire ResultSrc_E_0_H, ResultSrc_M1_0_H, ResultSrc_M2_0_H, RegWrite_M1_H, RegWrite_M2_H, RegWrite_W_H,
 
     // Imem Interface
     output wire [31:0] PC,
@@ -29,12 +29,16 @@ module datapath (
     // ================================================
     // Wires and Regs
     // ================================================
-    // F
-    reg [31:0] PC_F, PC_Next_F, PC_F_r;     // To wait BRAM, a reg for PC is needed
-    wire [31:0] PC_Plus4_F, PC_Target_E, ALU_Result_E;
-    wire [31:0] Instr_F;
+    // F1
+    reg [31:0] PC_F1, PC_Next_F1;
+    wire [31:0] PC_Plus4_F1, PC_Target_E, ALU_Result_E;
+
+    // F2
+    reg F2_Valid;
+    reg [31:0] PC_F2, PC_Plus4_F2;
 
     // D
+    reg valid_D;    // used to control Reg and Mem write
     wire RegWrite_D, MemWrite_D, Branch_D, ALUSrc_b_D;
     wire [1:0] Jump_D, ResultSrc_D, ALUSrc_a_D;
     wire [3:0] ALU_Control_D;
@@ -45,6 +49,7 @@ module datapath (
     wire [31:0] RD1_D, RD2_D, ImmExt_D;
 
     // E
+    reg valid_E;
     wire Zero_E;
     reg [1:0] PC_Src_E;
     reg Branch_taken_E;
@@ -57,28 +62,38 @@ module datapath (
 
     reg [4:0] Rs1_E, Rs2_E, Rd_E;
     reg [31:0] RD1_FD_E, RD1_E, RD2_E, PC_E, PC_Plus4_E;
-    reg [31:0] ImmExt_E, SrcA_E, WriteData_E, ALU_Result_M;
+    reg [31:0] ImmExt_E, SrcA_E, WriteData_E, ALU_Result_M1;
     wire [31:0] SrcB_E;
 
-    // M
-    reg RegWrite_M, MemWrite_M;
-    reg [1:0] ResultSrc_M;
-    reg [2:0] Funct3_M;
-    reg [4:0] Rd_M;
-    reg [31:0] WriteData_M, PC_Plus4_M;
-    reg [31:0] WriteData_Aligned_M;
-    reg [3:0] Byte_Enable;
-    wire [1:0] Addr_Offset = ALU_Result_M[1:0];
+    // M1
+    reg valid_M1;
+    reg RegWrite_M1, MemWrite_M1;
+    reg [1:0] ResultSrc_M1;
+    reg [2:0] Funct3_M1;
+    reg [4:0] Rd_M1;
+    reg [31:0] WriteData_M1, PC_Plus4_M1, Result_M1;
+    reg [31:0] WriteData_Aligned_M1;
+    reg [3:0] Byte_Enable_M1;
+    wire [1:0] Addr_Offset_M1 = ALU_Result_M1[1:0];
+
+    // M2
+    reg valid_M2;
+    reg RegWrite_M2;
+    reg [1:0] ResultSrc_M2;
+    reg [2:0] Funct3_M2;
+    reg [4:0] Rd_M2;
+    reg [31:0] ALU_Result_M2, PC_Plus4_M2, Result_M2, ReadData_Processed_M2;
+    wire [1:0] Byte_Offset_M2 = ALU_Result_M2[1:0];
+    wire [31:0] ReadData_M2;
 
     // W
+    reg valid_W;
     reg RegWrite_W;
     reg [1:0] ResultSrc_W;
-    reg [2:0] Funct3_W;
     reg [4:0] Rd_W;
     reg [31:0] ALU_Result_W, PC_Plus4_W, Result_W;
     reg [31:0] ReadData_Processed_W;
     wire [31:0] ReadData_W;
-    wire [1:0] Byte_Offset_W = ALU_Result_W[1:0];
 
 
     // ================================================
@@ -104,49 +119,74 @@ module datapath (
     assign Rs1_E_H = Rs1_E;
     assign Rs2_E_H = Rs2_E;
     assign Rd_E_H = Rd_E;
-    assign Rd_M_H = Rd_M;
+    assign Rd_M1_H = Rd_M1;
+    assign Rd_M2_H = Rd_M2;
     assign Rd_W_H = Rd_W;
     assign PC_Src_E_H = PC_Src_E;
     assign ResultSrc_E_0_H = ResultSrc_E[0];
-    assign ResultSrc_M_0_H = ResultSrc_M[0];
-    assign RegWrite_M_H = RegWrite_M;
+    assign ResultSrc_M1_0_H = ResultSrc_M1[0];
+    assign ResultSrc_M2_0_H = ResultSrc_M2[0];
+    assign RegWrite_M1_H = RegWrite_M1;
+    assign RegWrite_M2_H = RegWrite_M2;
     assign RegWrite_W_H = RegWrite_W;
 
 
     // ================================================
-    // 1. Fetch Stage (F)
+    // 1.1 Fetch Stage 1 (F1)  -->  give PC to IMEM
     // ================================================
     // Imem Interface
-    assign PC = PC_F;
-    assign Instr_F = Instr;
+    assign PC = PC_F1;
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            PC_F <= 32'b0;
-            PC_F_r <= 32'b0;
+            PC_F1 <= 32'b0;
         end
-        else if (!Stall_F) begin
-            PC_F <= PC_Next_F;
-            PC_F_r <= PC_F;
+        else if (!Stall_F1) begin
+            PC_F1 <= PC_Next_F1;
         end
     end
 
-    assign PC_Plus4_F = PC_F_r + 32'd4;     // This is only used by jal / jalr
+    assign PC_Plus4_F1 = PC_F1 + 32'd4;
 
     // PC MUX
     always @( *) begin
         case (PC_Src_E)
-            2'b00: PC_Next_F = PC_F + 32'd4;    // This acts as source of pc_next
-            2'b01: PC_Next_F = PC_Target_E;
-            2'b10: PC_Next_F = ALU_Result_E;
+            2'b00: PC_Next_F1 = PC_Plus4_F1;
+            2'b01: PC_Next_F1 = PC_Target_E;
+            2'b10: PC_Next_F1 = ALU_Result_E;
 
-            default: PC_Next_F = PC_F + 32'd4;
+            default: PC_Next_F1 = PC_Plus4_F1;
         endcase
     end
 
 
     // ================================================
-    // IF/ID Pipeline Register
+    // IF1/IF2 Pipeline Register
+    // ================================================
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            PC_F2 <= 32'b0;
+            PC_Plus4_F2 <= 32'b0;
+            F2_Valid <= 1'b0;
+        end
+        else if (Flush_F2) begin
+            F2_Valid <= 1'b0;   // Instr_D do not use Instr
+        end
+        else if (!Stall_F2) begin
+            PC_F2 <= PC_F1;
+            PC_Plus4_F2 <= PC_Plus4_F1;
+            F2_Valid <= 1'b1;
+        end
+    end
+
+
+    // ================================================
+    // 1.2 Fetch Stage 2 (F2)  -->  receive Instr
+    // ================================================
+
+
+    // ================================================
+    // IF2/ID Pipeline Register
     // ================================================
     // reset > flush > stall
     always @(posedge clk or posedge reset) begin
@@ -154,15 +194,23 @@ module datapath (
             Instr_D <= 32'b0;
             PC_D <= 32'b0;
             PC_Plus4_D <= 32'b0;
+            valid_D <= 1'b0;
         end
         else if (Flush_D) begin
-            // no need to clear PC
-            Instr_D <= 32'b0;
+            Instr_D <= 32'h00000013;    // NOP
+            valid_D <= 1'b0;
         end
         else if (!Stall_D) begin
-            Instr_D <= Instr_F;
-            PC_D <= PC_F_r;
-            PC_Plus4_D <= PC_Plus4_F;
+            if (F2_Valid) begin
+                Instr_D <= Instr;
+                valid_D <= 1'b1;
+            end
+            else begin
+                Instr_D <= 32'h00000013;
+                valid_D <= 1'b0;
+            end
+            PC_D <= PC_F2;
+            PC_Plus4_D <= PC_Plus4_F2;
         end
     end
 
@@ -181,7 +229,7 @@ module datapath (
         .clk (clk),
         .reset (reset),
 
-        .WE3 (RegWrite_W),
+        .WE3 (RegWrite_W & valid_W),
         .WD3 (Result_W),
         .A1 (Instr_D[19:15]),
         .A2 (Instr_D[24:20]),
@@ -205,6 +253,7 @@ module datapath (
     // ================================================
     always @(posedge clk or posedge reset) begin
         if (reset || Flush_E) begin
+            valid_E <= 1'b0;
             RegWrite_E <= 1'b0;
             ResultSrc_E <= 2'b0;
             MemWrite_E <= 1'b0;
@@ -225,7 +274,8 @@ module datapath (
             ImmExt_E <= 32'b0;
             PC_Plus4_E <= 32'b0;
         end
-        else begin
+        else if (!Stall_D) begin
+            valid_E <= valid_D;
             RegWrite_E <= RegWrite_D;
             ResultSrc_E <= ResultSrc_D;
             MemWrite_E <= MemWrite_D;
@@ -288,7 +338,8 @@ module datapath (
         case (ForwardA_E)
             2'b00: RD1_FD_E = RD1_E;
             2'b01: RD1_FD_E = Result_W;
-            2'b10: RD1_FD_E = ALU_Result_M;
+            2'b10: RD1_FD_E = Result_M1;
+            2'b11: RD1_FD_E = Result_M2;
 
             default: RD1_FD_E = RD1_E;     
         endcase
@@ -307,7 +358,8 @@ module datapath (
         case (ForwardB_E)
             2'b00: WriteData_E = RD2_E;
             2'b01: WriteData_E = Result_W;
-            2'b10: WriteData_E = ALU_Result_M;
+            2'b10: WriteData_E = Result_M1;
+            2'b11: WriteData_E = Result_M2;
 
             default: WriteData_E = RD2_E;
         endcase
@@ -331,104 +383,206 @@ module datapath (
     // ================================================
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            RegWrite_M <= 1'b0;
-            ResultSrc_M <= 2'b0;
-            MemWrite_M <= 1'b0;
-            Funct3_M <= 3'b0;
+            valid_M1 <= 1'b0;
+            RegWrite_M1 <= 1'b0;
+            ResultSrc_M1 <= 2'b0;
+            MemWrite_M1 <= 1'b0;
+            Funct3_M1 <= 3'b0;
 
-            ALU_Result_M <= 32'b0;
-            WriteData_M <= 32'b0;
-            Rd_M <= 5'b0;
-            PC_Plus4_M <= 32'b0;
+            ALU_Result_M1 <= 32'b0;
+            WriteData_M1 <= 32'b0;
+            Rd_M1 <= 5'b0;
+            PC_Plus4_M1 <= 32'b0;
         end
         else begin
-            RegWrite_M <= RegWrite_E;
-            ResultSrc_M <= ResultSrc_E;
-            MemWrite_M <= MemWrite_E;
-            Funct3_M <= Funct3_E;
+            valid_M1 <= valid_E;
+            RegWrite_M1 <= RegWrite_E;
+            ResultSrc_M1 <= ResultSrc_E;
+            MemWrite_M1 <= MemWrite_E;
+            Funct3_M1 <= Funct3_E;
 
-            ALU_Result_M <= ALU_Result_E;
-            WriteData_M <= WriteData_E;
-            Rd_M <= Rd_E;
-            PC_Plus4_M <= PC_Plus4_E;
+            ALU_Result_M1 <= ALU_Result_E;
+            WriteData_M1 <= WriteData_E;
+            Rd_M1 <= Rd_E;
+            PC_Plus4_M1 <= PC_Plus4_E;
         end
     end
 
 
     // ================================================
-    // 4. Memory Stage (M)
+    // 4.1 Memory Stage 1 (M1)  --> give addr
     // ================================================
     // Dmem Interface
     always @( *) begin
-        case (Funct3_M)
+        case (Funct3_M1)
             3'b000: begin   // sb
-                case (Addr_Offset)
+                case (Addr_Offset_M1)
                     2'b00: begin
-                        WriteData_Aligned_M = {24'b0, WriteData_M[7:0]};
-                        Byte_Enable = 4'b0001;
+                        WriteData_Aligned_M1 = {24'b0, WriteData_M1[7:0]};
+                        Byte_Enable_M1 = 4'b0001;
                     end
                     2'b01: begin
-                        WriteData_Aligned_M = {16'b0, WriteData_M[7:0], 8'b0};
-                        Byte_Enable = 4'b0010;
+                        WriteData_Aligned_M1 = {16'b0, WriteData_M1[7:0], 8'b0};
+                        Byte_Enable_M1 = 4'b0010;
                     end
                     2'b10: begin
-                        WriteData_Aligned_M = {8'b0, WriteData_M[7:0], 16'b0};
-                        Byte_Enable = 4'b0100;
+                        WriteData_Aligned_M1 = {8'b0, WriteData_M1[7:0], 16'b0};
+                        Byte_Enable_M1 = 4'b0100;
                     end
                     2'b11: begin
-                        WriteData_Aligned_M = {WriteData_M[7:0], 24'b0};
-                        Byte_Enable = 4'b1000;
+                        WriteData_Aligned_M1 = {WriteData_M1[7:0], 24'b0};
+                        Byte_Enable_M1 = 4'b1000;
                     end
                 endcase
             end
             3'b001: begin   // sh
-                if (Addr_Offset[1] == 0) begin
-                    WriteData_Aligned_M = {16'b0, WriteData_M[15:0]};
-                    Byte_Enable = 4'b0011;
+                if (Addr_Offset_M1[1] == 0) begin
+                    WriteData_Aligned_M1 = {16'b0, WriteData_M1[15:0]};
+                    Byte_Enable_M1 = 4'b0011;
                 end
                 else begin
-                    WriteData_Aligned_M = {WriteData_M[15:0], 16'b0};
-                    Byte_Enable = 4'b1100;
+                    WriteData_Aligned_M1 = {WriteData_M1[15:0], 16'b0};
+                    Byte_Enable_M1 = 4'b1100;
                 end
             end
             3'b010: begin   // sw
-                WriteData_Aligned_M = WriteData_M;
-                Byte_Enable = 4'b1111;
+                WriteData_Aligned_M1 = WriteData_M1;
+                Byte_Enable_M1 = 4'b1111;
             end
 
             default: begin
-                WriteData_Aligned_M = WriteData_M;
-                Byte_Enable = 4'b0000;
+                WriteData_Aligned_M1 = WriteData_M1;
+                Byte_Enable_M1 = 4'b0000;
             end     
         endcase
     end
 
-    assign MemWrite_EN = (MemWrite_M) ? Byte_Enable : 4'b0000;
-    assign MemAddr = ALU_Result_M;
-    assign WriteData = WriteData_Aligned_M;
+    // Drive DMEM
+    assign MemWrite_EN = (MemWrite_M1 & valid_M1) ? Byte_Enable_M1 : 4'b0000;
+    assign MemAddr = ALU_Result_M1;
+    assign WriteData = WriteData_Aligned_M1;
+
+    always @( *) begin
+        case (ResultSrc_M1)
+            2'b00: Result_M1 = ALU_Result_M1;
+            2'b10: Result_M1 = PC_Plus4_M1;
+
+            default: Result_M1 = ALU_Result_M1;
+        endcase
+    end
 
 
     // ================================================
-    // MEM/WB Pipeline Register
+    // MEM1/MEM2 Pipeline Register
     // ================================================
     always @(posedge clk or posedge reset) begin
         if (reset) begin
+            valid_M2 <= 1'b0;
+            RegWrite_M2 <= 1'b0;
+            ResultSrc_M2 <= 2'b0;
+            Funct3_M2 <= 3'b0;
+
+            ALU_Result_M2 <= 32'b0;
+            Rd_M2 <= 5'b0;
+            PC_Plus4_M2 <= 32'b0;
+        end
+        else begin
+            valid_M2 <= valid_M1;
+            RegWrite_M2 <= RegWrite_M1;
+            ResultSrc_M2 <= ResultSrc_M1;
+            Funct3_M2 <= Funct3_M1;
+
+            ALU_Result_M2 <= ALU_Result_M1;
+            Rd_M2 <= Rd_M1;
+            PC_Plus4_M2 <= PC_Plus4_M1;
+        end
+    end
+
+
+    // ================================================
+    // 4.2 Memory Stage 2 (M2)  --> receive data
+    // ================================================
+    // Load data logic
+    assign ReadData_M2 = ReadData;
+    always @( *) begin
+        case (Funct3_M2)
+            // lw
+            3'b010: ReadData_Processed_M2  = ReadData_M2;
+
+            // lb
+            3'b000: begin
+                case (Byte_Offset_M2)
+                    2'b00: ReadData_Processed_M2 = {{24{ReadData_M2[7]}}, ReadData_M2[7:0]};
+                    2'b01: ReadData_Processed_M2 = {{24{ReadData_M2[15]}}, ReadData_M2[15:8]};
+                    2'b10: ReadData_Processed_M2 = {{24{ReadData_M2[23]}}, ReadData_M2[23:16]};
+                    2'b11: ReadData_Processed_M2 = {{24{ReadData_M2[31]}}, ReadData_M2[31:24]};
+                endcase
+            end
+
+            // lbu
+            3'b100: begin
+                case (Byte_Offset_M2)
+                    2'b00: ReadData_Processed_M2 = {24'b0, ReadData_M2[7:0]};
+                    2'b01: ReadData_Processed_M2 = {24'b0, ReadData_M2[15:8]};
+                    2'b10: ReadData_Processed_M2 = {24'b0, ReadData_M2[23:16]};
+                    2'b11: ReadData_Processed_M2 = {24'b0, ReadData_M2[31:24]};
+                endcase
+            end
+
+            // lh
+            3'b001: begin
+                if (Byte_Offset_M2[1] == 0)    // low
+                    ReadData_Processed_M2 = {{16{ReadData_M2[15]}}, ReadData_M2[15:0]};
+                else
+                    ReadData_Processed_M2 = {{16{ReadData_M2[31]}}, ReadData_M2[31:16]};
+            end
+
+            // lhu
+            3'b101: begin
+                if (Byte_Offset_M2[1] == 0)    // low
+                    ReadData_Processed_M2 = {16'b0, ReadData_M2[15:0]};
+                else
+                    ReadData_Processed_M2 = {16'b0, ReadData_M2[31:16]};
+            end
+
+            default: ReadData_Processed_M2  = ReadData_M2;      
+        endcase
+    end
+
+    always @( *) begin
+        case (ResultSrc_M2)
+            2'b00: Result_M2 = ALU_Result_M2;
+            2'b01: Result_M2 = ReadData_Processed_M2;
+            2'b10: Result_M2 = PC_Plus4_M2;
+
+            default: Result_M2 = ALU_Result_M2;
+        endcase
+    end
+
+
+    // ================================================
+    // MEM2/WB Pipeline Register
+    // ================================================
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            valid_W <= 1'b0;
             RegWrite_W <= 1'b0;
             ResultSrc_W <= 2'b0;
-            Funct3_W <= 3'b0;
 
             ALU_Result_W <= 32'b0;
+            ReadData_Processed_W <= 32'b0;
             Rd_W <= 5'b0;
             PC_Plus4_W <= 32'b0;
         end
         else begin
-            RegWrite_W <= RegWrite_M;
-            ResultSrc_W <= ResultSrc_M;
-            Funct3_W <= Funct3_M;
+            valid_W <= valid_M2;
+            RegWrite_W <= RegWrite_M2;
+            ResultSrc_W <= ResultSrc_M2;
 
-            ALU_Result_W <= ALU_Result_M;
-            Rd_W <= Rd_M;
-            PC_Plus4_W <= PC_Plus4_M;
+            ALU_Result_W <= ALU_Result_M2;
+            ReadData_Processed_W <= ReadData_Processed_M2;
+            Rd_W <= Rd_M2;
+            PC_Plus4_W <= PC_Plus4_M2;
         end
     end
 
@@ -436,55 +590,7 @@ module datapath (
     // ================================================
     // 5. Writeback Stage (W)
     // ================================================
-    // Load data logic
-    // BRAM is sync, should be processed in WB Stage
-    assign ReadData_W = ReadData;
-
-    always @( *) begin
-        case (Funct3_W)
-            // lw
-            3'b010: ReadData_Processed_W  = ReadData_W;
-
-            // lb
-            3'b000: begin
-                case (Byte_Offset_W)
-                    2'b00: ReadData_Processed_W = {{24{ReadData_W[7]}}, ReadData_W[7:0]};
-                    2'b01: ReadData_Processed_W = {{24{ReadData_W[15]}}, ReadData_W[15:8]};
-                    2'b10: ReadData_Processed_W = {{24{ReadData_W[23]}}, ReadData_W[23:16]};
-                    2'b11: ReadData_Processed_W = {{24{ReadData_W[31]}}, ReadData_W[31:24]};
-                endcase
-            end
-
-            // lbu
-            3'b100: begin
-                case (Byte_Offset_W)
-                    2'b00: ReadData_Processed_W = {24'b0, ReadData_W[7:0]};
-                    2'b01: ReadData_Processed_W = {24'b0, ReadData_W[15:8]};
-                    2'b10: ReadData_Processed_W = {24'b0, ReadData_W[23:16]};
-                    2'b11: ReadData_Processed_W = {24'b0, ReadData_W[31:24]};
-                endcase
-            end
-
-            // lh
-            3'b001: begin
-                if (Byte_Offset_W[1] == 0)    // low
-                    ReadData_Processed_W = {{16{ReadData_W[15]}}, ReadData_W[15:0]};
-                else
-                    ReadData_Processed_W = {{16{ReadData_W[31]}}, ReadData_W[31:16]};
-            end
-
-            // lhu
-            3'b101: begin
-                if (Byte_Offset_W[1] == 0)    // low
-                    ReadData_Processed_W = {16'b0, ReadData_W[15:0]};
-                else
-                    ReadData_Processed_W = {16'b0, ReadData_W[31:16]};
-            end
-
-            default: ReadData_Processed_W  = ReadData_W;      
-        endcase
-    end
-
+    // Choose Result Source
     always @( *) begin
         case (ResultSrc_W)
             2'b00: Result_W = ALU_Result_W;
@@ -496,4 +602,3 @@ module datapath (
     end
 
 endmodule
-

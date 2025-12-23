@@ -3,6 +3,7 @@ module processor_core(
 
     // Imem Interface
     output wire [31:0] PC,
+    output wire Stall,
     input wire [31:0] Instr,
 
     // Dmem Interface
@@ -24,11 +25,13 @@ module processor_core(
     wire [3:0] ALU_Control;
 
     // Hazard Unit Interface
-    wire Stall_F, Stall_D, Flush_D, Flush_E;
+    wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E;
     wire [1:0] ForwardA_E, ForwardB_E;
-    wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M_H, Rd_W_H;
+    wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M1_H, Rd_M2_H, Rd_W_H;
     wire [1:0] PC_Src_E_H;
-    wire ResultSrc_E_0_H, ResultSrc_M_0_H, RegWrite_M_H, RegWrite_W_H;
+    wire ResultSrc_E_0_H, ResultSrc_M1_0_H, ResultSrc_M2_0_H, RegWrite_M1_H, RegWrite_M2_H, RegWrite_W_H;
+
+    assign Stall = Stall_F1;
 
 
     // ===================================================
@@ -66,8 +69,10 @@ module processor_core(
         .Instr_D_out (Instr_D),
 
         // Hazard Unit Interface
-        .Stall_F (Stall_F),
+        .Stall_F1 (Stall_F1),
+        .Stall_F2 (Stall_F2),
         .Stall_D (Stall_D),
+        .Flush_F2 (Flush_F2),
         .Flush_D (Flush_D),
         .Flush_E (Flush_E),
         .ForwardA_E (ForwardA_E),
@@ -77,12 +82,15 @@ module processor_core(
         .Rs1_E_H (Rs1_E_H),
         .Rs2_E_H (Rs2_E_H),
         .Rd_E_H (Rd_E_H),
-        .Rd_M_H (Rd_M_H),
+        .Rd_M1_H (Rd_M1_H),
+        .Rd_M2_H (Rd_M2_H),
         .Rd_W_H (Rd_W_H),
         .PC_Src_E_H (PC_Src_E_H),
         .ResultSrc_E_0_H (ResultSrc_E_0_H),
-        .ResultSrc_M_0_H (ResultSrc_M_0_H),
-        .RegWrite_M_H (RegWrite_M_H),
+        .ResultSrc_M1_0_H (ResultSrc_M1_0_H),
+        .ResultSrc_M2_0_H (ResultSrc_M2_0_H),
+        .RegWrite_M1_H (RegWrite_M1_H),
+        .RegWrite_M2_H (RegWrite_M2_H),
         .RegWrite_W_H (RegWrite_W_H),
 
         // Imem Interface
@@ -100,8 +108,10 @@ module processor_core(
         .clk (clk),
         .reset (reset),
         
-        .Stall_F (Stall_F),
+        .Stall_F1 (Stall_F1),
+        .Stall_F2 (Stall_F2),
         .Stall_D (Stall_D),
+        .Flush_F2 (Flush_F2),
         .Flush_D (Flush_D),
         .Flush_E (Flush_E),
         .ForwardA_E (ForwardA_E),
@@ -111,12 +121,15 @@ module processor_core(
         .Rs1_E_H (Rs1_E_H),
         .Rs2_E_H (Rs2_E_H),
         .Rd_E_H (Rd_E_H),
-        .Rd_M_H (Rd_M_H),
+        .Rd_M1_H (Rd_M1_H),
+        .Rd_M2_H (Rd_M2_H),
         .Rd_W_H (Rd_W_H),
         .PC_Src_E_H (PC_Src_E_H),
         .ResultSrc_E_0_H (ResultSrc_E_0_H),
-        .ResultSrc_M_0_H (ResultSrc_M_0_H),
-        .RegWrite_M_H (RegWrite_M_H),
+        .ResultSrc_M1_0_H (ResultSrc_M1_0_H),
+        .ResultSrc_M2_0_H (ResultSrc_M2_0_H),
+        .RegWrite_M1_H (RegWrite_M1_H),
+        .RegWrite_M2_H (RegWrite_M2_H),
         .RegWrite_W_H (RegWrite_W_H)
     );
 
