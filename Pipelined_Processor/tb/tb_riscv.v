@@ -17,6 +17,9 @@ module tb_riscv ();
     wire [31:0] debug_a4 = dut.cpu.d_unit.rf.regs[14];
     wire [31:0] debug_t2 = dut.cpu.d_unit.rf.regs[7];
 
+    wire is_writing_tohost = (|dut.MemWrite_EN) && (dut.MemAddr == 32'h1000);
+    wire [31:0] tohost_data = dut.WriteData;
+
     // Generate clock, T = 20ns
     initial begin
         sys_clk = 0;
@@ -39,9 +42,9 @@ module tb_riscv ();
     // load testcase
     initial begin
         // vivado sim
-        $readmemh("rv32ui-p-ma_data.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-simple.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
         // tmp for test of dmem
-        $readmemh("rv32ui-p-ma_data.hex", dut.dmem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-simple.hex", dut.dmem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
 
         // iverilog sim
         // $readmemh("rv32ui-p-tests/hex/rv32ui-p-add.hex", dut.imem.ram);

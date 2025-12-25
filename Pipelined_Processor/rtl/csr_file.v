@@ -5,7 +5,7 @@ module csr_file (
     input wire [11:0] csr_addr,
     input wire csr_we,      // csr write enable
     input wire [31:0] csr_wdata,    // write data
-    input wire [31:0] csr_rdata,    // read data
+    output wire [31:0] csr_rdata,    // read data
 
     // Trap interface (from W)
     input wire trap_en,
@@ -45,6 +45,14 @@ module csr_file (
     localparam CSR_MCAUSE   = 12'h342;
     localparam CSR_MTVAL    = 12'h343;
     localparam CSR_MIP      = 12'h344;
+    // Fake CSRs, not needed in this case
+    localparam CSR_MHARTID  = 12'hF14;
+    localparam CSR_MISA     = 12'h301;
+    localparam CSR_MEDELEG  = 12'h302;
+    localparam CSR_MIDELEG  = 12'h303;
+    localparam CSR_SATP     = 12'h180;
+    localparam CSR_PMPCFG0  = 12'h3A0;
+    localparam CSR_PMPADDR0 = 12'h3B0;
 
     // Read
     assign csr_rdata = (csr_addr == CSR_MSTATUS) ? mstatus :
@@ -53,7 +61,13 @@ module csr_file (
                        (csr_addr == CSR_MEPC)    ? mepc    :
                        (csr_addr == CSR_MCAUSE)  ? mcause  :
                        (csr_addr == CSR_MTVAL)   ? mtval   :
-                       (csr_addr == CSR_MIP)     ? mip     : 32'b0;
+                       (csr_addr == CSR_MIP)     ? mip     : 
+                        // Fake Read Logic
+                       (csr_addr == CSR_MHARTID) ? 32'b0   : 
+                       (csr_addr == CSR_MISA)    ? 32'h40001100 : // RV32I
+                       (csr_addr == CSR_SATP)    ? 32'b0   :
+                       (csr_addr == CSR_MEDELEG) ? 32'b0   :
+                       (csr_addr == CSR_MIDELEG) ? 32'b0   : 32'b0;
     
     assign mepc_out = mepc;
     assign mtvec_out = mtvec;

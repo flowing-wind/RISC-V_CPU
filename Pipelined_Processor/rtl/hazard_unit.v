@@ -2,9 +2,10 @@ module hazard_unit (
     input wire clk, reset,
     input wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M1_H, Rd_M2_H, Rd_W_H,
     input wire [1:0] PC_Src_E_H,
+    input wire EX_Flush_H, 
     input wire ResultSrc_E_0_H, ResultSrc_M1_0_H, ResultSrc_M2_0_H, RegWrite_M1_H, RegWrite_M2_H, RegWrite_W_H,
 
-    output wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E,
+    output wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E, Flush_M1, Flush_M2,
     output wire [1:0] ForwardA_E, ForwardB_E
 );
 
@@ -45,8 +46,10 @@ module hazard_unit (
     assign Stall_F2 = lwStall;
     assign Stall_D = lwStall;
 
-    assign Flush_F2 = (|PC_Src_E_H);
-    assign Flush_D = (|PC_Src_E_H);
-    assign Flush_E = (lwStall || (|PC_Src_E_H));
+    assign Flush_F2 = (|PC_Src_E_H) || EX_Flush_H;
+    assign Flush_D = (|PC_Src_E_H) || EX_Flush_H;
+    assign Flush_E = (lwStall || (|PC_Src_E_H)) || EX_Flush_H;
+    assign Flush_M1 = EX_Flush_H;
+    assign Flush_M2 = EX_Flush_H;
 
 endmodule

@@ -1,6 +1,9 @@
 module processor_core(
     input wire clk, reset,
 
+    // Interrupt Interface
+    input wire Ext_Int, Sw_Int, Timer_Int,
+
     // Imem Interface
     output wire [31:0] PC,
     output wire Stall,
@@ -25,13 +28,17 @@ module processor_core(
     wire [3:0] ALU_Control;
 
     // Hazard Unit Interface
-    wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E;
+    wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E, Flush_M1, Flush_M2;
+    wire EX_Flush;
     wire [1:0] ForwardA_E, ForwardB_E;
     wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M1_H, Rd_M2_H, Rd_W_H;
     wire [1:0] PC_Src_E_H;
     wire ResultSrc_E_0_H, ResultSrc_M1_0_H, ResultSrc_M2_0_H, RegWrite_M1_H, RegWrite_M2_H, RegWrite_W_H;
 
     assign Stall = Stall_F1;
+
+    // CSR Related
+    wire CSRWrite, Is_MRET, Is_ECALL, Illegal_Instr;
 
 
     // ===================================================
@@ -41,6 +48,7 @@ module processor_core(
         .Funct3 (Funct3),
         .Funct7b5 (Funct7b5),
 
+        .Instr_In_D (Instr_D),
         .RegWrite (RegWrite),
         .MemWrite (MemWrite),
         .Branch (Branch),
@@ -49,7 +57,13 @@ module processor_core(
         .ResultSrc (ResultSrc),
         .ALUSrc_a (ALUSrc_a),
         .ImmSrc (ImmSrc),
-        .ALU_Control (ALU_Control)
+        .ALU_Control (ALU_Control),
+
+        // CSR
+        .CSRWrite (CSRWrite),
+        .Is_MRET (Is_MRET),
+        .Is_ECALL (Is_ECALL),
+        .Illegal_Instr (Illegal_Instr)
     );
 
     datapath d_unit (
@@ -75,6 +89,9 @@ module processor_core(
         .Flush_F2 (Flush_F2),
         .Flush_D (Flush_D),
         .Flush_E (Flush_E),
+        .Flush_M1 (Flush_M1),
+        .Flush_M2 (Flush_M2),
+        .EX_Flush_H (EX_Flush),
         .ForwardA_E (ForwardA_E),
         .ForwardB_E (ForwardB_E),
         .Rs1_D_H (Rs1_D_H),
@@ -92,6 +109,16 @@ module processor_core(
         .RegWrite_M1_H (RegWrite_M1_H),
         .RegWrite_M2_H (RegWrite_M2_H),
         .RegWrite_W_H (RegWrite_W_H),
+
+        // CSR
+        .CSRWrite (CSRWrite),
+        .Is_ECALL (Is_ECALL),
+        .Is_MRET (Is_MRET),
+        .Illegal_Instr (Illegal_Instr),
+
+        .Ext_Int (Ext_Int),
+        .Sw_Int (Sw_Int),
+        .Timer_Int (Timer_Int),
 
         // Imem Interface
         .PC (PC),
@@ -114,6 +141,9 @@ module processor_core(
         .Flush_F2 (Flush_F2),
         .Flush_D (Flush_D),
         .Flush_E (Flush_E),
+        .Flush_M1 (Flush_M1),
+        .Flush_M2 (Flush_M2),
+        .EX_Flush_H (EX_Flush),
         .ForwardA_E (ForwardA_E),
         .ForwardB_E (ForwardB_E),
         .Rs1_D_H (Rs1_D_H),

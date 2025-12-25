@@ -36,6 +36,8 @@ module alu (
             4'b1000: ALU_Result = SrcA >> SrcB[4:0];  // srl
             4'b1001: ALU_Result = $signed(SrcA) >>> SrcB[4:0];    // sra
 
+            4'b1111: ALU_Result = SrcA;     // Directly give SrcA, used in CSR Instr
+
             default: ALU_Result = 32'b0;
         endcase
     end

@@ -30,6 +30,12 @@ module top(
         .clk (clk_core),
         .reset (reset),
 
+        // Interrupt Interface
+        // not used for now
+        .Ext_Int (1'b0), 
+        .Sw_Int (1'b0), 
+        .Timer_Int (1'b0),
+
         .PC (PC),
         .Stall (Stall),
         .Instr (Instr),
