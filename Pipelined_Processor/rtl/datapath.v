@@ -463,8 +463,8 @@ module datapath (
         ((Funct3_E == 3'b001 || Funct3_E == 3'b101) && (ALU_Result_E[0] != 0)); // lh, lhu, sh --> 2-aligned
     
     // 2. Load OR Store Exception
-    wire Ex_Load_Misaligned = (MemWrite == 0) && (ResultSrc_E == 2'b01) && Addr_Misaligned; // ResultSrc_E to distinguish non-load instr
-    wire Ex_Store_Misaligned = (MemWrite == 1) && Addr_Misaligned;  // MemWrite == 1  -->  Store
+    wire Ex_Load_Misaligned = (MemWrite_E == 0) && (ResultSrc_E == 2'b01) && Addr_Misaligned; // ResultSrc_E to distinguish non-load instr
+    wire Ex_Store_Misaligned = (MemWrite_E == 1) && Addr_Misaligned;  // MemWrite == 1  -->  Store
 
     // 3. Exception Summary
     assign EX_Valid_E_New = EX_Valid_E || Ex_Load_Misaligned || Ex_Store_Misaligned;

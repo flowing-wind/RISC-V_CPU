@@ -58,7 +58,8 @@ module tb_riscv ();
 
 
         // iverilog sim
-        // $readmemh("rv32ui-p-tests/hex/rv32ui-p-add.hex", dut.imem.ram);
+        // $readmemh("current_test.hex", dut.imem.ram);
+        // $readmemh("current_test.hex", dut.dmem.ram);
         // $dumpfile("sim/sim.vcd");
         // $dumpvars(0, tb_riscv);
     end

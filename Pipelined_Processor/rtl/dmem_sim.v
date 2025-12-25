@@ -6,7 +6,7 @@ module DATA_MEM (
     input  wire [31:0] dina,
     output reg  [31:0] douta
 );
-    reg [31:0] ram [0:2047];
+    reg [31:0] ram [0:4096];
     
     always @(posedge clka) begin
         if (ena) begin
