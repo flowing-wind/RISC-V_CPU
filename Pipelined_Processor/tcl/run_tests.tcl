@@ -1,5 +1,9 @@
 # --- Vivado Tcl Script for RISC-V Regression Test ---
 
+open_project "E:/Projects/FPGA/Pipelined_Processor/Pipelined_Processor.xpr"
+
+launch_simulation
+
 # 1. 设置仿真超时时间 (防止死循环导致脚本卡死)
 set timeout_time "200us"
 
@@ -30,7 +34,11 @@ foreach hex_file $hex_files {
     file copy -force $hex_file "E:/Projects/RISC-V_CPU/Pipelined_Processor/tcl/current_test.hex"
 
     # 5. 重置仿真时间到 0
-    restart
+
+    close_sim -force
+
+    
+    launch_simulation
 
     # 6. 运行仿真
     # 使用 run 命令。如果 Verilog 中触发了 $stop，run 会提前结束。

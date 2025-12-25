@@ -32,19 +32,20 @@ module tb_riscv ();
     end
 
     // used fot tcl
-    reg [1:0] test_status = 0;
-    always @(posedge sys_clk) begin
+    reg [1:0] test_status = 2'd0;
+
+    always @(negedge sys_clk) begin
         if (is_writing_tohost) begin
             if (tohost_data == 1) begin
                 $display("--- Verilog: Test Passed (Write 1 to tohost) ---");
-                test_status = 1;
+                test_status = 2'd1;
             end
             else begin
                 $display("--- Verilog: Test Failed (Write %h to tohost) ---", tohost_data);
-                test_status = 2;
+                test_status = 2'd2;
             end
             
-            #10;
+            #2;
             $stop;
         end
     end
@@ -52,9 +53,9 @@ module tb_riscv ();
     // load testcase
     initial begin
         // vivado sim
-        $readmemh("current_test.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-srl.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
         // tmp for test of dmem
-        $readmemh("current_test.hex", dut.dmem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-srl.hex", dut.dmem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
 
 
         // iverilog sim

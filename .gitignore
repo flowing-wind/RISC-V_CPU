@@ -8,4 +8,4 @@ sim_build/
 results.xml
 *.json
 
-*.hex
+Pipelined_Processor/tcl/current_test.hex

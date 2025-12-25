@@ -1,1 +1,1 @@
-source E:/Projects/RISC-V_CPU/Pipelined_Processor/tcl/run_tests.tcl
+vivado -mode batch -source E:/Projects/RISC-V_CPU/Pipelined_Processor/tcl/run_tests.tcl
