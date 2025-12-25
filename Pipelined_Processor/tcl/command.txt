@@ -1,0 +1,1 @@
+source E:/Projects/RISC-V_CPU/Pipelined_Processor/tcl/run_tests.tcl
