@@ -38,7 +38,7 @@
 - [x] rv32ui-p-srai
 - [x] rv32ui-p-srl
 - [x] rv32ui-p-srli
-- [x] rv32ui-p-st_ld
+- [ ] rv32ui-p-st_ld
 - [x] rv32ui-p-sub
 - [x] rv32ui-p-sw
 - [x] rv32ui-p-xor

@@ -54,9 +54,9 @@ module tb_riscv ();
     // load testcase
     initial begin
         // vivado sim
-        $readmemh("current_test.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-ld_st.hex", dut.imem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
         // tmp for test of dmem
-        $readmemh("current_test.hex", dut.dmem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("rv32ui-p-ld_st.hex", dut.dmem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
 
 
         // iverilog sim

@@ -56,7 +56,7 @@ module top(
     INSTR_MEM imem (
         .clka (clk_core),
         .ena (rst_sync_n[0] & ~Stall),
-        .wea (1'b0),    // instr read only
+        .wea (4'b0000),    // instr read only
         .addra (PC),
         .dina (32'b0),
         .douta (Instr)

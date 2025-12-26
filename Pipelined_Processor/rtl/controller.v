@@ -103,15 +103,15 @@ module controller(
                     end
                     3'b001, 3'b010, 3'b011: begin
                         RegWrite_r = 1;
-                        CSRWrite_r = 1;
                         ImmSrc_r = 3'b000;  // not cared
                         ALUSrc_a_r = 2'b00; // use rs1
+                        CSRWrite_r = (Funct3 == 3'b001) || (Instr_In_D[19:15] != 5'b0); // CSRRW and rs1 != x0
                     end
                     3'b101, 3'b110, 3'b111: begin
                         RegWrite_r = 1;
-                        CSRWrite_r = 1;
                         ImmSrc_r = 3'b101;
                         ALUSrc_a_r = 2'b10; // use 32'b0, add to SrcB
+                        CSRWrite_r = (Funct3 == 3'b101) || (Instr_In_D[19:15] != 5'b0);
                     end
 
                     default: Illegal_Instr_r = 1;
