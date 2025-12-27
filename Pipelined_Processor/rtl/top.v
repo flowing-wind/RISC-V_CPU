@@ -53,23 +53,23 @@ module top(
         .clk_out1 (clk_core)
     );
 
-    INSTR_MEM imem (
+    // IMEM & DMEM
+    RAM mem (
+        // IMEM
         .clka (clk_core),
         .ena (rst_sync_n[0] & ~Stall),
         .wea (4'b0000),    // instr read only
         .addra (PC),
         .dina (32'b0),
-        .douta (Instr)
-    );
+        .douta (Instr),
 
-    // DMEM
-    DATA_MEM dmem (
-        .clka (clk_core),
-        .ena (rst_sync_n[0]),
-        .wea (MemWrite_EN),
-        .addra (MemAddr),
-        .dina (WriteData),
-        .douta (ReadData)
+        // DMEM
+        .clkb (clk_core),
+        .enb (rst_sync_n[0]),
+        .web (MemWrite_EN),
+        .addrb (MemAddr),
+        .dinb (WriteData),
+        .doutb (ReadData)
     );
 
 endmodule

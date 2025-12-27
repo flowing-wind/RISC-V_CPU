@@ -1,14 +1,20 @@
 # --- Vivado Tcl Script for RISC-V Regression Test ---
 
+# 打开工程
 open_project "E:/Projects/FPGA/Pipelined_Processor/Pipelined_Processor.xpr"
 
+# 先启动一次仿真，确保仿真环境建立
 launch_simulation
 
 # 1. 设置仿真超时时间 (防止死循环导致脚本卡死)
 set timeout_time "200us"
 
-# 2. 获取所有的 hex 文件列表
-set hex_files [get_files *.hex]
+# 2. 定义 hex 测试用例所在目录 & 通用目标文件名
+set hex_dir  "E:/Projects/RISC-V_CPU/Pipelined_Processor/rv32ui-p-tests/hex"
+set dest_hex "E:/Projects/RISC-V_CPU/Pipelined_Processor/tcl/current_test.hex"
+
+# 3. 获取所有的 hex 文件列表（从指定目录）
+set hex_files [glob -nocomplain -directory $hex_dir *.hex]
 
 # 准备统计变量
 set pass_count 0
@@ -20,32 +26,30 @@ puts "Starting RISC-V Regression Test"
 puts "Found [llength $hex_files] test cases."
 puts "========================================\n"
 
-# 3. 循环遍历每个测试文件
+# 4. 循环遍历每个测试文件
 foreach hex_file $hex_files {
     set test_name [file tail $hex_file]
-    
-    # 忽略非测试用的 hex 文件（如果有的话，比如 current_test.hex 本身）
+
+    # 如需忽略名为 current_test.hex 的文件（保险起见）
     if {$test_name == "current_test.hex"} { continue }
 
     puts "Running Test: $test_name ..."
 
-    # 4. 将当前的 hex 文件复制为 Testbench 读取的通用文件名
+    # 5. 将当前的 hex 文件复制为 Testbench 读取的通用文件名
     # file copy -force 会覆盖旧文件
-    file copy -force $hex_file "E:/Projects/RISC-V_CPU/Pipelined_Processor/tcl/current_test.hex"
+    file copy -force $hex_file $dest_hex
 
-    # 5. 重置仿真时间到 0
+    # 6. 重置仿真
 
     close_sim -force
-
-    
     launch_simulation
 
-    # 6. 运行仿真
+    # 7. 运行仿真
     # 使用 run 命令。如果 Verilog 中触发了 $stop，run 会提前结束。
     # 如果 Verilog 死循环，run 会在 timeout_time 后强制结束。
     run $timeout_time
 
-    # 7. 检查结果
+    # 8. 检查结果
     set status_val [get_value -radix unsigned /tb_riscv/test_status]
 
     # 判断逻辑 (1 是 Pass, 2 是 Fail, 0 是超时)
@@ -65,7 +69,7 @@ foreach hex_file $hex_files {
     }
 }
 
-# 8. 输出最终报告
+# 9. 输出最终报告
 puts "\n========================================"
 puts "Test Summary"
 puts "========================================"
