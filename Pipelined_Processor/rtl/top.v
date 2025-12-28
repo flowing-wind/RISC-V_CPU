@@ -1,6 +1,9 @@
 module top(
     input sys_clk,
-    input sys_rst_n
+    input sys_rst_n,
+
+    input uart_rx,
+    output uart_tx
     );
 
     // Generate reset signal
@@ -20,24 +23,47 @@ module top(
 
     assign reset = ~rst_sync_n[1];  // eff at 1
 
-    
+
+    // ===========================================================
+    // Signals
     // ===========================================================
     wire [31:0] PC, Instr, MemAddr, WriteData, ReadData;
     wire [3:0] MemWrite_EN;
-    wire Stall;
+    wire IMEM_Stall; // Stall F1 for IMEM
+    wire AXI_Stall;
+    wire UART_Irq;
 
+    // Address Decode
+    // BRAM: 0x0000_0000 ~ 0x0FFF_FFFF
+    // UART: 0x1000_0000 ~ 0x1FFF_FFFF;
+    wire is_uart_addr = (MemAddr[31:28] == 4'h1);
+    wire is_bram_addr = ~is_uart_addr;
+
+    // AXI-Lite interface
+    wire [31:0] m_axi_awaddr, m_axi_wdata, m_axi_araddr, m_axi_rdata;
+    wire [3:0]  m_axi_wstrb;
+    wire        m_axi_awvalid, m_axi_awready, m_axi_wvalid, m_axi_wready;
+    wire [1:0]  m_axi_bresp, m_axi_rresp;
+    wire        m_axi_bvalid, m_axi_bready, m_axi_arvalid, m_axi_arready;
+    wire        m_axi_rvalid, m_axi_rready;
+
+    wire uart_rdata, bram_rdata;
+
+    
+    // ===========================================================
     processor_core cpu (
         .clk (clk_core),
         .reset (reset),
 
         // Interrupt Interface
         // not used for now
-        .Ext_Int (1'b0), 
+        .Ext_Int (UART_Irq), 
         .Sw_Int (1'b0), 
         .Timer_Int (1'b0),
+        .EX_Stall (AXI_Stall),
 
         .PC (PC),
-        .Stall (Stall),
+        .Stall (IMEM_Stall),
         .Instr (Instr),
 
         .MemWrite_EN (MemWrite_EN),
@@ -57,7 +83,7 @@ module top(
     RAM mem (
         // IMEM
         .clka (clk_core),
-        .ena (rst_sync_n[0] & ~Stall),
+        .ena (rst_sync_n[0] & ~IMEM_Stall),
         .wea (4'b0000),    // instr read only
         .addra (PC),
         .dina (32'b0),
@@ -69,7 +95,60 @@ module top(
         .web (MemWrite_EN),
         .addrb (MemAddr),
         .dinb (WriteData),
-        .doutb (ReadData)
+        .doutb (bram_rdata)
     );
+
+    // AXI_Bridge
+    axi_bridge bridge (
+        .clk (clk_core),
+        .rstn (~reset),
+
+        .cpu_addr (MemAddr),
+        .cpu_wdata (WriteData),
+        .cpu_we (MemWrite_EN),
+        .cpu_req (is_uart_addr),    // available if in UART addr 
+        
+        .cpu_rdata (uart_rdata),
+        .cpu_stall (AXI_Stall),
+
+        // AXI
+        .m_axi_awaddr(m_axi_awaddr), .m_axi_awvalid(m_axi_awvalid), .m_axi_awready(m_axi_awready),
+        .m_axi_wdata(m_axi_wdata), .m_axi_wstrb(m_axi_wstrb), .m_axi_wvalid(m_axi_wvalid), .m_axi_wready(m_axi_wready),
+        .m_axi_bresp(m_axi_bresp), .m_axi_bvalid(m_axi_bvalid), .m_axi_bready(m_axi_bready),
+        .m_axi_araddr(m_axi_araddr), .m_axi_arvalid(m_axi_arvalid), .m_axi_arready(m_axi_arready),
+        .m_axi_rdata(m_axi_rdata), .m_axi_rresp(m_axi_rresp), .m_axi_rvalid(m_axi_rvalid), .m_axi_rready(m_axi_rready)
+    );
+
+    axi_uartlite_0 uart_inst (
+        .s_axi_aclk    (clk_core),
+        .s_axi_aresetn (~reset),
+        .interrupt     (UART_Irq),
+        
+        .s_axi_awaddr  (m_axi_awaddr[3:0]),
+        .s_axi_awvalid (m_axi_awvalid),
+        .s_axi_awready (m_axi_awready),
+        .s_axi_wdata   (m_axi_wdata),
+        .s_axi_wstrb   (m_axi_wstrb),
+        .s_axi_wvalid  (m_axi_wvalid),
+        .s_axi_wready  (m_axi_wready),
+        .s_axi_bresp   (m_axi_bresp),
+        .s_axi_bvalid  (m_axi_bvalid),
+        .s_axi_bready  (m_axi_bready),
+        .s_axi_araddr  (m_axi_araddr[3:0]),
+        .s_axi_arvalid (m_axi_arvalid),
+        .s_axi_arready (m_axi_arready),
+        .s_axi_rdata   (m_axi_rdata),
+        .s_axi_rresp   (m_axi_rresp),
+        .s_axi_rvalid  (m_axi_rvalid),
+        .s_axi_rready  (m_axi_rready),
+        
+        .rx (uart_rx),
+        .tx (uart_tx)
+    );
+
+    // ===========================================================
+    // ReadData MUX
+    // ===========================================================
+    assign ReadData = is_uart_addr ? uart_rdata : bram_rdata;
 
 endmodule

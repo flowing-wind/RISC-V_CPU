@@ -3,6 +3,7 @@ module processor_core(
 
     // Interrupt Interface
     input wire Ext_Int, Sw_Int, Timer_Int,
+    input wire EX_Stall,
 
     // Imem Interface
     output wire [31:0] PC,
@@ -28,7 +29,7 @@ module processor_core(
     wire [3:0] ALU_Control;
 
     // Hazard Unit Interface
-    wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E, Flush_M1, Flush_M2;
+    wire Stall_F1, Stall_F2, Stall_D, Stall_E, Stall_M1, Stall_M2, Stall_W, Flush_F2, Flush_D, Flush_E, Flush_M1, Flush_M2;
     wire EX_Flush;
     wire [1:0] ForwardA_E, ForwardB_E;
     wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M1_H, Rd_M2_H, Rd_W_H;
@@ -86,6 +87,10 @@ module processor_core(
         .Stall_F1 (Stall_F1),
         .Stall_F2 (Stall_F2),
         .Stall_D (Stall_D),
+        .Stall_E (Stall_E), 
+        .Stall_M1 (Stall_M1), 
+        .Stall_M2 (Stall_M2), 
+        .Stall_W (Stall_W),
         .Flush_F2 (Flush_F2),
         .Flush_D (Flush_D),
         .Flush_E (Flush_E),
@@ -138,6 +143,11 @@ module processor_core(
         .Stall_F1 (Stall_F1),
         .Stall_F2 (Stall_F2),
         .Stall_D (Stall_D),
+        .Stall_E (Stall_E), 
+        .Stall_M1 (Stall_M1), 
+        .Stall_M2 (Stall_M2), 
+        .Stall_W (Stall_W),
+        .EX_Stall_H (EX_Stall),
         .Flush_F2 (Flush_F2),
         .Flush_D (Flush_D),
         .Flush_E (Flush_E),

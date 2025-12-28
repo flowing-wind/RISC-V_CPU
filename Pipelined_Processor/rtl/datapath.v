@@ -9,7 +9,7 @@ module datapath (
     output wire [31:0] Instr_D_out,
 
     // Hazard Unit Interface
-    input wire Stall_F1, Stall_F2, Stall_D, Flush_F2, Flush_D, Flush_E, Flush_M1, Flush_M2,
+    input wire Stall_F1, Stall_F2, Stall_D, Stall_E, Stall_M1, Stall_M2, Stall_W, Flush_F2, Flush_D, Flush_E, Flush_M1, Flush_M2,
     input wire [1:0] ForwardA_E, ForwardB_E,
     output wire EX_Flush_H,
     output wire [4:0] Rs1_D_H, Rs2_D_H, Rs1_E_H, Rs2_E_H, Rd_E_H, Rd_M1_H, Rd_M2_H, Rd_W_H,
@@ -345,7 +345,7 @@ module datapath (
             EX_Valid_E <= 1'b0;
             EX_Cause_E <= 32'b0;
         end
-        else if (!Stall_D) begin
+        else if (!Stall_E) begin
             valid_E <= valid_D;
             RegWrite_E <= RegWrite_D;
             ResultSrc_E <= ResultSrc_D;
@@ -499,7 +499,7 @@ module datapath (
             EX_Tval_M1 <= 32'b0;
             EX_PC_M1 <= 32'b0;
         end
-        else begin
+        else if (!Stall_M1) begin
             valid_M1 <= valid_E;
             RegWrite_M1 <= RegWrite_E;
             ResultSrc_M1 <= ResultSrc_E;
@@ -609,7 +609,7 @@ module datapath (
             EX_Tval_M2 <= 32'b0;
             EX_PC_M2 <= 32'b0;
         end
-        else begin
+        else if (!Stall_M2) begin
             valid_M2 <= valid_M1;
             RegWrite_M2 <= RegWrite_M1;
             ResultSrc_M2 <= ResultSrc_M1;
@@ -715,7 +715,7 @@ module datapath (
             EX_Tval_W <= 32'b0;
             EX_PC_W <= 32'b0;
         end
-        else begin
+        else if (!Stall_W) begin
             valid_W <= valid_M2;
             RegWrite_W <= RegWrite_M2;
             ResultSrc_W <= ResultSrc_M2;
