@@ -5,7 +5,7 @@ module controller(
     
     // Datapath
     input wire [31:0] Instr_In_D,
-    output wire RegWrite, MemWrite, Branch, ALUSrc_b,
+    output wire RegWrite, MemWrite, MemRead, Branch, ALUSrc_b,
     output wire [1:0] Jump, ResultSrc, ALUSrc_a,
     output wire [2:0] ImmSrc,
     output wire [3:0] ALU_Control,
@@ -35,6 +35,7 @@ module controller(
     assign ALUSrc_a = ALUSrc_a_r;
     assign ImmSrc = ImmSrc_r;
     assign ALU_Control = ALU_Control_r;
+    assign MemRead = (OP == 7'b0000011);
 
 
     // ================================================

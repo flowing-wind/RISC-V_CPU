@@ -29,6 +29,7 @@ module top(
     // ===========================================================
     wire [31:0] PC, Instr, MemAddr, WriteData, ReadData;
     wire [3:0] MemWrite_EN;
+    wire MemReq;
     wire IMEM_Stall; // Stall F1 for IMEM
     wire AXI_Stall;
     wire UART_Irq;
@@ -47,7 +48,7 @@ module top(
     wire        m_axi_bvalid, m_axi_bready, m_axi_arvalid, m_axi_arready;
     wire        m_axi_rvalid, m_axi_rready;
 
-    wire uart_rdata, bram_rdata;
+    wire [31:0] uart_rdata, bram_rdata;
 
     
     // ===========================================================
@@ -66,6 +67,7 @@ module top(
         .Stall (IMEM_Stall),
         .Instr (Instr),
 
+        .MemReq (MemReq),
         .MemWrite_EN (MemWrite_EN),
         .MemAddr (MemAddr),
         .WriteData (WriteData),
@@ -106,7 +108,7 @@ module top(
         .cpu_addr (MemAddr),
         .cpu_wdata (WriteData),
         .cpu_we (MemWrite_EN),
-        .cpu_req (is_uart_addr),    // available if in UART addr 
+        .cpu_req (is_uart_addr && MemReq),
         
         .cpu_rdata (uart_rdata),
         .cpu_stall (AXI_Stall),

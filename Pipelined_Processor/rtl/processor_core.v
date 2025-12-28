@@ -11,6 +11,7 @@ module processor_core(
     input wire [31:0] Instr,
 
     // Dmem Interface
+    output wire MemReq,
     output wire [3:0] MemWrite_EN,  // The MemWrite_EN is MemWrite_M(expanded), not MemWrite
     output wire [31:0] MemAddr,     // Data address in dmem
     output wire [31:0] WriteData,   // Data written to dmem
@@ -23,7 +24,7 @@ module processor_core(
     wire [2:0] Funct3 = Instr_D[14:12];
     wire Funct7b5 = Instr_D[30];
 
-    wire RegWrite, MemWrite, Branch, ALUSrc_b;
+    wire RegWrite, MemWrite, MemRead, Branch, ALUSrc_b;
     wire [1:0] Jump, ResultSrc, ALUSrc_a;
     wire [2:0] ImmSrc;
     wire [3:0] ALU_Control;
@@ -52,6 +53,7 @@ module processor_core(
         .Instr_In_D (Instr_D),
         .RegWrite (RegWrite),
         .MemWrite (MemWrite),
+        .MemRead (MemRead),
         .Branch (Branch),
         .ALUSrc_b (ALUSrc_b),
         .Jump (Jump),
@@ -74,6 +76,8 @@ module processor_core(
         // Control Unit Interface
         .RegWrite (RegWrite),
         .MemWrite (MemWrite),
+        .MemRead (MemRead),
+        .MemReq (MemReq),
         .Branch (Branch),
         .ALUSrc_b (ALUSrc_b),
         .Jump (Jump),

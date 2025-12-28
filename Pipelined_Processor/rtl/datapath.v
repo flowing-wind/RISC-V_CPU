@@ -2,11 +2,12 @@ module datapath (
     input wire clk, reset,
 
     // Control Unit Interface
-    input wire RegWrite, MemWrite, Branch, ALUSrc_b,    // MemWrite comes from Control Unit
+    input wire RegWrite, MemWrite, MemRead, Branch, ALUSrc_b,    // MemWrite comes from Control Unit
     input wire [1:0] Jump, ResultSrc, ALUSrc_a,
     input wire [2:0] ImmSrc,
     input wire [3:0] ALU_Control,
     output wire [31:0] Instr_D_out,
+    output wire MemReq,
 
     // Hazard Unit Interface
     input wire Stall_F1, Stall_F2, Stall_D, Stall_E, Stall_M1, Stall_M2, Stall_W, Flush_F2, Flush_D, Flush_E, Flush_M1, Flush_M2,
@@ -50,7 +51,7 @@ module datapath (
 
     // D
     reg valid_D;    // used to control Reg and Mem write
-    wire RegWrite_D, MemWrite_D, Branch_D, ALUSrc_b_D;
+    wire RegWrite_D, MemWrite_D, MemRead_D, Branch_D, ALUSrc_b_D;
     wire [1:0] Jump_D, ResultSrc_D, ALUSrc_a_D;
     wire [3:0] ALU_Control_D;
 
@@ -71,7 +72,7 @@ module datapath (
     reg Branch_taken_E;
     wire ALU_LSB = ALU_Result_E[0];
 
-    reg RegWrite_E, MemWrite_E, Branch_E, ALUSrc_b_E;
+    reg RegWrite_E, MemWrite_E, MemRead_E, Branch_E, ALUSrc_b_E;
     reg [1:0] Jump_E, ResultSrc_E, ALUSrc_a_E;
     reg [2:0] Funct3_E;
     reg [3:0] ALU_Control_E;
@@ -93,7 +94,7 @@ module datapath (
 
     // M1
     reg valid_M1;
-    reg RegWrite_M1, MemWrite_M1;
+    reg RegWrite_M1, MemWrite_M1, MemRead_M1;
     reg [1:0] ResultSrc_M1;
     reg [2:0] Funct3_M1;
     reg [4:0] Rd_M1;
@@ -153,6 +154,7 @@ module datapath (
     // ================================================
     assign RegWrite_D = RegWrite;
     assign MemWrite_D = MemWrite;
+    assign MemRead_D = MemRead;
     assign Branch_D = Branch;
     assign ALUSrc_b_D = ALUSrc_b;
     assign Jump_D = Jump;
@@ -321,6 +323,7 @@ module datapath (
             RegWrite_E <= 1'b0;
             ResultSrc_E <= 2'b0;
             MemWrite_E <= 1'b0;
+            MemRead_E <= 1'b0;
             Jump_E <= 2'b0;
             Branch_E <= 1'b0;
             ALU_Control_E <= 4'b0;
@@ -350,6 +353,7 @@ module datapath (
             RegWrite_E <= RegWrite_D;
             ResultSrc_E <= ResultSrc_D;
             MemWrite_E <= MemWrite_D;
+            MemRead_E <= MemRead_D;
             Jump_E <= Jump_D;
             Branch_E <= Branch_D;
             ALU_Control_E <= ALU_Control_D;
@@ -483,6 +487,7 @@ module datapath (
             RegWrite_M1 <= 1'b0;
             ResultSrc_M1 <= 2'b0;
             MemWrite_M1 <= 1'b0;
+            MemRead_M1 <= 1'b0;
             Funct3_M1 <= 3'b0;
             Instr_M1 <= 32'b0;
 
@@ -504,6 +509,7 @@ module datapath (
             RegWrite_M1 <= RegWrite_E;
             ResultSrc_M1 <= ResultSrc_E;
             MemWrite_M1 <= MemWrite_E;
+            MemRead_M1 <= MemRead_E;
             Funct3_M1 <= Funct3_E;
             Instr_M1 <= Instr_E;
 
@@ -526,6 +532,9 @@ module datapath (
     // ================================================
     // 4.1 Memory Stage 1 (M1)  --> give addr
     // ================================================
+    // Mem Requre?
+    assign MemReq = (MemWrite_M1 || MemRead_M1) && valid_M1 && ~EX_Valid_M1;
+
     // Dmem Interface
     always @( *) begin
         case (Funct3_M1)
