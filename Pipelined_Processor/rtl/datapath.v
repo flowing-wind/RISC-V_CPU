@@ -113,14 +113,13 @@ module datapath (
 
     // M2
     reg valid_M2;
-    reg RegWrite_M2;
+    reg RegWrite_M2, MemWrite_M2;
     reg [1:0] ResultSrc_M2;
     reg [2:0] Funct3_M2;
     reg [4:0] Rd_M2;
     reg [31:0] Instr_M2;
-    reg [31:0] ALU_Result_M2, PC_Plus4_M2, Result_M2, ReadData_Processed_M2;
+    reg [31:0] WriteData_M2, ReadData_M2, ALU_Result_M2, PC_Plus4_M2, Result_M2, ReadData_Processed_M2;
     wire [1:0] Byte_Offset_M2 = ALU_Result_M2[1:0];
-    wire [31:0] ReadData_M2;
     //// M2 CSR
     reg CSRWrite_M2;
     reg Is_MRET_M2;
@@ -131,11 +130,11 @@ module datapath (
 
     // W
     reg valid_W;
-    reg RegWrite_W;
+    reg RegWrite_W, MemWrite_W;
     reg [1:0] ResultSrc_W;
     reg [4:0] Rd_W;
     reg [31:0] Instr_W;
-    reg [31:0] ALU_Result_W, PC_Plus4_W, Result_W;
+    reg [31:0] WriteData_W, ALU_Result_W, PC_Plus4_W, Result_W;
     reg [31:0] ReadData_Processed_W;
     wire [31:0] ReadData_W;
     //// W CSR
@@ -602,10 +601,12 @@ module datapath (
         if (reset || Flush_M2) begin
             valid_M2 <= 1'b0;
             RegWrite_M2 <= 1'b0;
+            MemWrite_M2 <= 1'b0;
             ResultSrc_M2 <= 2'b0;
             Funct3_M2 <= 3'b0;
             Instr_M2 <= 32'b0;
 
+            WriteData_M2 <= 32'b0;
             ALU_Result_M2 <= 32'b0;
             Rd_M2 <= 5'b0;
             PC_Plus4_M2 <= 32'b0;
@@ -621,10 +622,12 @@ module datapath (
         else if (!Stall_M2) begin
             valid_M2 <= valid_M1;
             RegWrite_M2 <= RegWrite_M1;
+            MemWrite_M2 <= MemWrite_M1;
             ResultSrc_M2 <= ResultSrc_M1;
             Funct3_M2 <= Funct3_M1;
             Instr_M2 <= Instr_M1;
 
+            WriteData_M2 <= WriteData_M1;
             ALU_Result_M2 <= ALU_Result_M1;
             Rd_M2 <= Rd_M1;
             PC_Plus4_M2 <= PC_Plus4_M1;
@@ -643,8 +646,17 @@ module datapath (
     // ================================================
     // 4.2 Memory Stage 2 (M2)  --> receive data
     // ================================================
+    // Store-to-Load Hazard
+    always @( *) begin
+       if ((ResultSrc_M2 == 2'b01) && MemWrite_W && valid_W && (ALU_Result_M2 == ALU_Result_W)) begin
+            ReadData_M2 = WriteData_W;
+       end 
+       else begin
+            ReadData_M2 = ReadData;
+       end
+    end
+    
     // Load data logic
-    assign ReadData_M2 = ReadData;
     always @( *) begin
         case (Funct3_M2)
             // lw
@@ -708,9 +720,11 @@ module datapath (
         if (reset) begin
             valid_W <= 1'b0;
             RegWrite_W <= 1'b0;
+            MemWrite_W <= 1'b0;
             ResultSrc_W <= 2'b0;
             Instr_W <= 32'b0;
 
+            WriteData_W <= 32'b0;
             ALU_Result_W <= 32'b0;
             ReadData_Processed_W <= 32'b0;
             Rd_W <= 5'b0;
@@ -727,9 +741,11 @@ module datapath (
         else if (!Stall_W) begin
             valid_W <= valid_M2;
             RegWrite_W <= RegWrite_M2;
+            MemWrite_W <= MemWrite_M2;
             ResultSrc_W <= ResultSrc_M2;
             Instr_W <= Instr_M2;
 
+            WriteData_W <= WriteData_M2;
             ALU_Result_W <= ALU_Result_M2;
             ReadData_Processed_W <= ReadData_Processed_M2;
             Rd_W <= Rd_M2;
