@@ -119,6 +119,7 @@ module datapath (
     reg [4:0] Rd_M2;
     reg [31:0] Instr_M2;
     reg [31:0] WriteData_M2, ReadData_M2, ALU_Result_M2, PC_Plus4_M2, Result_M2, ReadData_Processed_M2;
+    reg [3:0] Byte_Enable_M2;
     wire [1:0] Byte_Offset_M2 = ALU_Result_M2[1:0];
     //// M2 CSR
     reg CSRWrite_M2;
@@ -136,6 +137,7 @@ module datapath (
     reg [31:0] Instr_W;
     reg [31:0] WriteData_W, ALU_Result_W, PC_Plus4_W, Result_W;
     reg [31:0] ReadData_Processed_W;
+    reg [3:0] Byte_Enable_W;
     wire [31:0] ReadData_W;
     //// W CSR
     reg CSRWrite_W;
@@ -610,6 +612,7 @@ module datapath (
             ALU_Result_M2 <= 32'b0;
             Rd_M2 <= 5'b0;
             PC_Plus4_M2 <= 32'b0;
+            Byte_Enable_M2 <= 4'b0000;
 
             // CSR
             CSRWrite_M2 <= 1'b0;
@@ -627,10 +630,11 @@ module datapath (
             Funct3_M2 <= Funct3_M1;
             Instr_M2 <= Instr_M1;
 
-            WriteData_M2 <= WriteData_M1;
+            WriteData_M2 <= WriteData_Aligned_M1;
             ALU_Result_M2 <= ALU_Result_M1;
             Rd_M2 <= Rd_M1;
             PC_Plus4_M2 <= PC_Plus4_M1;
+            Byte_Enable_M2 <= Byte_Enable_M1;
 
             // CSR
             CSRWrite_M2 <= CSRWrite_M1;
@@ -648,12 +652,14 @@ module datapath (
     // ================================================
     // Store-to-Load Hazard
     always @( *) begin
-       if ((ResultSrc_M2 == 2'b01) && MemWrite_W && valid_W && (ALU_Result_M2 == ALU_Result_W)) begin
-            ReadData_M2 = WriteData_W;
+        ReadData_M2 = ReadData;
+
+        if ((ResultSrc_M2 == 2'b01) && MemWrite_W && valid_W && (ALU_Result_M2[31:2] == ALU_Result_W[31:2])) begin
+            if (Byte_Enable_W[0]) ReadData_M2[7:0] = WriteData_W[7:0];
+            if (Byte_Enable_W[1]) ReadData_M2[15:8] = WriteData_W[15:8];
+            if (Byte_Enable_W[2]) ReadData_M2[23:16] = WriteData_W[23:16];
+            if (Byte_Enable_W[3]) ReadData_M2[31:24] = WriteData_W[31:24];
        end 
-       else begin
-            ReadData_M2 = ReadData;
-       end
     end
     
     // Load data logic
@@ -729,6 +735,7 @@ module datapath (
             ReadData_Processed_W <= 32'b0;
             Rd_W <= 5'b0;
             PC_Plus4_W <= 32'b0;
+            Byte_Enable_W <= 4'b0000;
 
             // CSR
             CSRWrite_W <= 1'b0;
@@ -750,6 +757,7 @@ module datapath (
             ReadData_Processed_W <= ReadData_Processed_M2;
             Rd_W <= Rd_M2;
             PC_Plus4_W <= PC_Plus4_M2;
+            Byte_Enable_W <= Byte_Enable_M2;
 
             // CSR
             CSRWrite_W <= CSRWrite_M2;
