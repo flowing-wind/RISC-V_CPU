@@ -2,18 +2,25 @@
 
 module tb_riscv ();
 
+    localparam MS = 1000000;
+    localparam US = 1000;
+
     reg sys_clk;
     reg sys_rst_n;
 
+    // UART para
+    reg uart_rx;
+    wire uart_tx;
+    parameter BIT_PERIOD = 104167;
+
     top dut (
         .sys_clk (sys_clk),
-        .sys_rst_n (sys_rst_n)
+        .sys_rst_n (sys_rst_n),
+
+        .uart_rx (uart_rx),
+        .uart_tx (uart_tx)
     );
 
-    // debug for gtkwave
-    wire [31:0] debug_gp = dut.cpu.d_unit.rf.regs[3];
-    wire is_writing_tohost = (|dut.MemWrite_EN) && (dut.MemAddr == 32'h1000);
-    wire [31:0] tohost_data = dut.WriteData;
 
     // Generate clock, T = 20ns
     initial begin
@@ -30,6 +37,47 @@ module tb_riscv ();
         #20;
         sys_rst_n = 1;
     end
+
+    // load testcase
+    initial begin
+        // vivado sim
+        // $readmemh("main.hex", dut.mem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+    end
+
+
+    task send_uart_char(input [7:0] char);
+        integer i;
+        begin
+            uart_rx = 0;    // start
+            #BIT_PERIOD;
+
+            for (i = 0; i < 8; i = i + 1) begin
+                uart_rx = char[i];
+                #BIT_PERIOD;
+            end
+
+            uart_rx = 1;    // stop
+            #BIT_PERIOD;
+
+            $display("--- Testbench: Sent character '%c' (0x%h) ---", char, char);
+        end
+    endtask
+
+    initial begin
+        uart_rx = 1;
+
+        #(15 * MS);
+        send_uart_char(8'h41);  // 'A'
+
+        #(8 * MS);
+        $stop;
+    end
+
+
+    // debug
+    // wire [31:0] debug_gp = dut.cpu.d_unit.rf.regs[3];
+    // wire is_writing_tohost = (|dut.MemWrite_EN) && (dut.MemAddr == 32'h1000);
+    // wire [31:0] tohost_data = dut.WriteData;
 
     // used fot tcl
     // reg [1:0] test_status = 2'd0;
@@ -50,18 +98,5 @@ module tb_riscv ();
     //         $stop;
     //     end
     // end
-
-    // load testcase
-    initial begin
-        // vivado sim
-        $readmemh("main.hex", dut.mem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
-        // tmp for test of dmem
-
-
-        // iverilog sim
-        // $readmemh("current_test.hex", dut.imem.ram);
-        // $dumpfile("sim/sim.vcd");
-        // $dumpvars(0, tb_riscv);
-    end
 
 endmodule

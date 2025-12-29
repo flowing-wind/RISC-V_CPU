@@ -794,7 +794,7 @@ module datapath (
     // Trigger Trap?
     assign Handle_Interrupt = valid_W && Global_Int_En && Int_Pending && ~EX_Valid_W;
     assign Trap_Taken = (valid_W && EX_Valid_W) || Handle_Interrupt;    // Exception OR Interrupt
-    assign Final_Cause = EX_Valid_W ? EX_Cause_W : {1'b1, 31'd7};   // CLINT and PLIC remained
+    assign Final_Cause = EX_Valid_W ? EX_Cause_W : {1'b1, 31'd11};   // CLINT and PLIC remained
 
     csr_file csr (
         .clk (clk),

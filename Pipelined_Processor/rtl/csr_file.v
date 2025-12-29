@@ -88,9 +88,12 @@ module csr_file (
             mie     <= 32'b0;
         end
         else begin
-            mip [11] <= ext_int;    // MEIP
-            mip [7]  <= timer_int;  // MTIP
-            mip [3]  <= sw_int;     // MSIP
+            if (ext_int)    // avoid mip interrupt changing unexpectly
+                mip[11] <= ext_int;    // MEIP
+            if (timer_int)
+                mip[7]  <= timer_int;  // MTIP
+            if (sw_int)
+                mip[3]  <= sw_int;     // MSIP
 
             if (trap_en) begin
                 mepc    <= trap_pc;
@@ -105,6 +108,10 @@ module csr_file (
             else if (is_mret) begin
                 mstatus[3] <= mstatus[7];
                 mstatus[7] <= 1'b1;     // set to 1 --> avoid errors in Interrupt Nesting
+
+                mip[11] <= 1'b0;
+                mip[7]  <= 1'b0;
+                mip[3]  <= 1'b0;
             end
             // Write CSR
             else if (csr_we) begin

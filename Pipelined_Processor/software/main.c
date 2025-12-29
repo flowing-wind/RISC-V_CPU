@@ -25,19 +25,23 @@ void uart_puts(const char *str) {
     }
 }
 
-int main() {
+void main() {
+    UART_CTRL = 0X13;
     // delay for a while
-    for (volatile int i=0; i<1000; i++);
+    for (volatile int i=0; i<100; i++);
 
     uart_puts("Hello World!");
 
-    int cnt = 0;
     while (1) {
-        if (UART_STATUS & STS_RX_VALID) {
-            char c = UART_RX_FIFO;
-            uart_putc(c);
-        }
+        // None
     }
+}
 
-    return 0;
+void external_interrupt_handler() {
+    while (UART_STATUS & STS_RX_VALID) {
+        char c = (char)(UART_RX_FIFO & 0xFF);
+
+        while (UART_STATUS & STS_TX_FULL);
+        UART_TX_FIFO = c;
+    }
 }
