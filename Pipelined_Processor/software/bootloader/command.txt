@@ -1,0 +1,5 @@
+riscv64-unknown-elf-gcc -march=rv32i -mabi=ilp32 -g -T bootloader.ld -nostartfiles -o bootloader.elf start.S bootloader.c
+
+riscv64-unknown-elf-objcopy -j .text -j .data -j .rodata -O verilog --verilog-data-width=4 bootloader.elf bootloader.hex
+
+riscv64-unknown-elf-objdump -D -S bootloader.elf > bootloader.dis

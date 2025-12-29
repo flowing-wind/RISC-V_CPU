@@ -1,5 +1,7 @@
 riscv64-unknown-elf-gcc -march=rv32i_zicsr -mabi=ilp32 -g -T link.ld -nostartfiles -o main.elf start.S main.c
 
+riscv64-unknown-elf-objcopy -O binary main.elf main.bin
+
 riscv64-unknown-elf-objcopy -j .text -j .data -j .rodata -O verilog --verilog-data-width=4 main.elf main.hex
 
 riscv64-unknown-elf-objdump -D -S main.elf > main.dis

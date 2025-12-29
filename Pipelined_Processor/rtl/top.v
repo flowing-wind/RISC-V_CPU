@@ -27,7 +27,7 @@ module top(
     // ===========================================================
     // Signals
     // ===========================================================
-    wire [31:0] PC, Instr, MemAddr, WriteData, ReadData;
+    wire [31:0] PC, Boot_Instr, Instr, MemAddr, WriteData, ReadData;
     wire [3:0] MemWrite_EN;
     wire MemReq;
     wire IMEM_Stall; // Stall F1 for IMEM
@@ -35,17 +35,24 @@ module top(
     wire UART_Irq;
 
     // Address Decode
-    // BRAM: 0x0000_0000 ~ 0x0FFF_FFFF
+    // ROM : 0x0000_0000 ~ 0x0000_0FFF
+    // RAM : 0x0000_1000 ~ 0x0000_4FFF
     // UART: 0x1000_0000 ~ 0x1FFF_FFFF;
-    wire is_uart_addr = (MemAddr[31:28] == 4'h1);
-    reg is_uart_addr_M2;    // addr should be kept, otherwise ReadData will change unexpectly
-    wire is_bram_addr = ~is_uart_addr;
+    wire is_rom_addr    = (MemAddr[31:12] == 20'h00000);
+    reg  is_rom_addr_M2;
+    wire is_ram_addr    = (MemAddr[31:12] >= 20'h00001 && MemAddr[31:12] <= 20'h00004);
+    wire is_uart_addr   = (MemAddr[31:28] == 4'h1);
+    reg  is_uart_addr_M2;    // addr should be kept, otherwise ReadData will change unexpectly
     
     always @(posedge clk_core or posedge reset) begin
-        if (reset)
+        if (reset) begin
+            is_rom_addr_M2  <= 1'b0;
             is_uart_addr_M2 <= 1'b0;
-        else if (!AXI_Stall)
+        end
+        else if (!AXI_Stall) begin
+            is_rom_addr_M2  <= is_rom_addr;
             is_uart_addr_M2 <= is_uart_addr;
+        end
     end
 
 
@@ -90,6 +97,13 @@ module top(
         .clk_out1 (clk_core)
     );
 
+    Boot_ROM rom (
+        .clka (clk_core),
+        .ena (rst_sync_n[0]),
+        .addra (PC),
+        .douta (Boot_Instr)
+    );
+
     // IMEM & DMEM
     RAM mem (
         // IMEM
@@ -102,7 +116,7 @@ module top(
 
         // DMEM
         .clkb (clk_core),
-        .enb (rst_sync_n[0] & is_bram_addr),
+        .enb (rst_sync_n[0] & is_ram_addr),
         .web (MemWrite_EN),
         .addrb (MemAddr),
         .dinb (WriteData),
@@ -160,6 +174,7 @@ module top(
     // ===========================================================
     // ReadData MUX
     // ===========================================================
-    assign ReadData = is_uart_addr_M2 ? uart_rdata : bram_rdata;
+    assign ReadData = is_uart_addr_M2 ? uart_rdata : 
+                      (is_rom_addr_M2 ? Boot_Instr : bram_rdata);
 
 endmodule

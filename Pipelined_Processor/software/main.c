@@ -14,6 +14,25 @@
 #define STS_TX_EMPTY    (1 << 2)
 #define STS_RX_VALID    (1 << 0)
 
+#define BUFFER_SIZE 64
+
+uint8_t rx_buffer[BUFFER_SIZE];
+volatile uint16_t head = 0;
+volatile uint16_t tail = 0;
+
+/* Check if App has received normal data */
+int app_uart_available() {
+    return head != tail;
+}
+
+/* Read data from software buffer */
+uint8_t app_uart_read() {
+    if (head == tail) return 0;
+    uint8_t data = rx_buffer[tail];
+    tail = (tail + 1) % BUFFER_SIZE;
+    return data;
+}
+
 void uart_putc(char c) {
     while (UART_STATUS & STS_TX_FULL);
     UART_TX_FIFO = c;
@@ -27,8 +46,6 @@ void uart_puts(const char *str) {
 
 void main() {
     UART_CTRL = 0X13;
-    // delay for a while
-    for (volatile int i=0; i<100; i++);
 
     uart_puts("Hello World!");
 
@@ -39,9 +56,21 @@ void main() {
 
 void external_interrupt_handler() {
     while (UART_STATUS & STS_RX_VALID) {
-        char c = (char)(UART_RX_FIFO & 0xFF);
+        uint8_t cmd = (uint8_t)(UART_RX_FIFO & 0xFF);
 
-        while (UART_STATUS & STS_TX_FULL);
-        UART_TX_FIFO = c;
+        if (cmd == 0x7F) {
+            uart_puts("Restarting to Bootloader...");
+            // no interrupt enabled
+            __asm__ volatile ("csrci mstatus, 8");
+            void (*bootloader)(void) = (void (*)(void))0x00000000;
+            bootloader();
+        }
+        else {
+            uint16_t next_head = (head + 1) % BUFFER_SIZE;
+            if (next_head != tail) {
+                rx_buffer[head] = cmd;
+                head = next_head;
+            }
+        }
     }
 }

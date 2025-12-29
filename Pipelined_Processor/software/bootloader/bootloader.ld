@@ -1,14 +1,11 @@
-OUTPUT_ARCH( "riscv" )
-ENTRY( _start )
-
 MEMORY
 {
-  BRAM (rwx) : ORIGIN = 0x00001000, LENGTH = 16K
+    BOOTROM (rwx) : ORIGIN = 0x00000000, LENGTH = 4K
 }
 
 SECTIONS
 {
-  . = 0x00010000;
+  . = 0x00000000;
 
   /* Code */
   .text : {
@@ -16,7 +13,7 @@ SECTIONS
     *(.text)
     *(.text.*)
     . = ALIGN(4);
-  } > BRAM
+  } > BOOTROM
 
   /* Read-Only Data */
   .rodata : {
@@ -26,7 +23,7 @@ SECTIONS
     *(.srodata)
     *(.srodata.*)
     . = ALIGN(4);
-  } > BRAM
+  } > BOOTROM
 
   /* Data */
   .data : {
@@ -35,7 +32,7 @@ SECTIONS
     *(.data.*)
     *(.sdata)
     . = ALIGN(4);
-  } > BRAM
+  } > BOOTROM
 
   /* BSS */
   .bss : {
@@ -46,10 +43,10 @@ SECTIONS
     *(.sbss)
     . = ALIGN(4);
     _bss_end = .;
-  } > BRAM
+  } > BOOTROM
 
   /* Stack Pointer */
-  . = ORIGIN(BRAM) + LENGTH(BRAM);
+  . = ORIGIN(BOOTROM) + LENGTH(BOOTROM);
   _stack_top = .;
   
 }
