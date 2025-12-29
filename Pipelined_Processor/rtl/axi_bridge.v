@@ -36,20 +36,21 @@ module axi_bridge (
     localparam IDLE = 3'd0;
     localparam WR_ADDR_DATA = 3'd1;
     localparam WR_RESP = 3'd2;
-    localparam RD_ADDR = 3'D3;
-    localparam RD_DATA = 3'D4;
+    localparam RD_ADDR = 3'd3;
+    localparam RD_DATA = 3'd4;
+    localparam WAIT_HANDSHAKE = 3'd5;
 
     reg [2:0] state;
     wire is_write = |cpu_we;
 
-    assign cpu_stall = (state != IDLE) || (cpu_req);
+    assign cpu_stall = cpu_req && (state != WAIT_HANDSHAKE);
 
     always @(posedge clk or negedge rstn) begin 
         if (!rstn) begin
             state <= IDLE;
             m_axi_awvalid <= 0; m_axi_wvalid <= 0; m_axi_bready <= 0;
             m_axi_arvalid <= 0; m_axi_rready<= 0;
-            cpu_rdata <= 0;
+            cpu_rdata <= 32'b0;
         end
         else begin
             case (state)
@@ -78,11 +79,19 @@ module axi_bridge (
                 WR_ADDR_DATA: begin
                     if (m_axi_awready) m_axi_awvalid <= 0;
                     if (m_axi_wready) m_axi_wvalid <= 0;
-                    if (!m_axi_awvalid && !m_axi_wvalid) state <= WR_RESP;
+
+                    if (m_axi_bvalid) begin
+                        m_axi_awvalid <= 0;
+                        m_axi_wvalid <= 0;
+                        m_axi_bready <= 0;
+                        state <= WAIT_HANDSHAKE;
+                    end
+                    else if (!m_axi_awvalid && !m_axi_wvalid) state <= WR_RESP;
                 end
+
                 WR_RESP: begin
                     if (m_axi_bvalid) begin
-                        state <= IDLE;
+                        state <= WAIT_HANDSHAKE;
                     end
                 end
 
@@ -95,9 +104,16 @@ module axi_bridge (
                 end
                 RD_DATA: begin
                     if (m_axi_rvalid) begin
-                        cpu_rdata <= m_axi_rdata;
-                        state <= IDLE;
+                        if (m_axi_rresp == 2'b10)
+                            cpu_rdata <= 32'b0;
+                        else
+                            cpu_rdata <= m_axi_rdata;
+                        state <= WAIT_HANDSHAKE;
                     end
+                end
+
+                WAIT_HANDSHAKE: begin
+                    state <= IDLE;
                 end
             endcase
         end

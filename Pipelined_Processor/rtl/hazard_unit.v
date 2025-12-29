@@ -42,7 +42,8 @@ module hazard_unit (
 
     // Stall  -->  Load Hazard
     assign lwStall = (ResultSrc_E_0_H && (Rd_E_H != 5'b0) && ((Rs1_D_H == Rd_E_H) || (Rs2_D_H == Rd_E_H))) ||
-                     (ResultSrc_M1_0_H && (Rd_M1_H != 0) && ((Rs1_D_H == Rd_M1_H) || (Rs2_D_H == Rd_M1_H)));
+                     (ResultSrc_M1_0_H && (Rd_M1_H != 5'b0) && ((Rs1_D_H == Rd_M1_H) || (Rs2_D_H == Rd_M1_H))) ||
+                     (ResultSrc_M2_0_H && (Rd_M2_H != 5'b0) && ((Rs1_D_H == Rd_M2_H) || (Rs2_D_H == Rd_M2_H)));
     assign Stall_F1 = lwStall | EX_Stall_H;
     assign Stall_F2 = lwStall | EX_Stall_H;
     assign Stall_D = lwStall | EX_Stall_H;

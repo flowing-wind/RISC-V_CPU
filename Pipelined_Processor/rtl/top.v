@@ -38,7 +38,16 @@ module top(
     // BRAM: 0x0000_0000 ~ 0x0FFF_FFFF
     // UART: 0x1000_0000 ~ 0x1FFF_FFFF;
     wire is_uart_addr = (MemAddr[31:28] == 4'h1);
+    reg is_uart_addr_M2;    // addr should be kept, otherwise ReadData will change unexpectly
     wire is_bram_addr = ~is_uart_addr;
+    
+    always @(posedge clk_core or posedge reset) begin
+        if (reset)
+            is_uart_addr_M2 <= 1'b0;
+        else if (!AXI_Stall)
+            is_uart_addr_M2 <= is_uart_addr;
+    end
+
 
     // AXI-Lite interface
     wire [31:0] m_axi_awaddr, m_axi_wdata, m_axi_araddr, m_axi_rdata;
@@ -93,7 +102,7 @@ module top(
 
         // DMEM
         .clkb (clk_core),
-        .enb (rst_sync_n[0]),
+        .enb (rst_sync_n[0] & is_bram_addr),
         .web (MemWrite_EN),
         .addrb (MemAddr),
         .dinb (WriteData),
@@ -151,6 +160,6 @@ module top(
     // ===========================================================
     // ReadData MUX
     // ===========================================================
-    assign ReadData = is_uart_addr ? uart_rdata : bram_rdata;
+    assign ReadData = is_uart_addr_M2 ? uart_rdata : bram_rdata;
 
 endmodule

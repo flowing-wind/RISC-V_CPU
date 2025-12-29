@@ -7,5 +7,8 @@ sim_build/
 *.vcd
 results.xml
 *.json
+*.elf
+*.dis
+Pipelined_Processor/software/*.hex
 
 Pipelined_Processor/tcl/current_test.hex
