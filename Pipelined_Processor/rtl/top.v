@@ -27,7 +27,7 @@ module top(
     // ===========================================================
     // Signals
     // ===========================================================
-    wire [31:0] PC, Boot_Instr, Instr, MemAddr, WriteData, ReadData;
+    wire [31:0] PC, Instr, Boot_Instr, RAM_Instr, MemAddr, WriteData, ReadData;
     wire [3:0] MemWrite_EN;
     wire MemReq;
     wire IMEM_Stall; // Stall F1 for IMEM
@@ -43,6 +43,8 @@ module top(
     wire is_ram_addr    = (MemAddr[31:12] >= 20'h00001 && MemAddr[31:12] <= 20'h00004);
     wire is_uart_addr   = (MemAddr[31:28] == 4'h1);
     reg  is_uart_addr_M2;    // addr should be kept, otherwise ReadData will change unexpectly
+
+    assign Instr = (PC[31:12] == 20'h00000) ? Boot_Instr : RAM_Instr;
     
     always @(posedge clk_core or posedge reset) begin
         if (reset) begin
@@ -64,7 +66,7 @@ module top(
     wire        m_axi_bvalid, m_axi_bready, m_axi_arvalid, m_axi_arready;
     wire        m_axi_rvalid, m_axi_rready;
 
-    wire [31:0] uart_rdata, bram_rdata;
+    wire [31:0] uart_rdata, ram_rdata, rom_rdata;
 
     
     // ===========================================================
@@ -98,10 +100,21 @@ module top(
     );
 
     Boot_ROM rom (
+        // BootInstr
         .clka (clk_core),
-        .ena (rst_sync_n[0]),
+        .ena (rst_sync_n[0] & ~IMEM_Stall),
+        .wea (4'b0000),
         .addra (PC),
-        .douta (Boot_Instr)
+        .dina (32'b0),
+        .douta (Boot_Instr),
+
+        // BootData
+        .clkb (clk_core),
+        .enb (rst_sync_n[0] & is_rom_addr),
+        .web (MemWrite_EN),
+        .addrb (MemAddr),
+        .dinb (WriteData),
+        .doutb (rom_rdata)
     );
 
     // IMEM & DMEM
@@ -112,7 +125,7 @@ module top(
         .wea (4'b0000),    // instr read only
         .addra (PC),
         .dina (32'b0),
-        .douta (Instr),
+        .douta (RAM_Instr),
 
         // DMEM
         .clkb (clk_core),
@@ -120,7 +133,7 @@ module top(
         .web (MemWrite_EN),
         .addrb (MemAddr),
         .dinb (WriteData),
-        .doutb (bram_rdata)
+        .doutb (ram_rdata)
     );
 
     // AXI_Bridge
@@ -175,6 +188,6 @@ module top(
     // ReadData MUX
     // ===========================================================
     assign ReadData = is_uart_addr_M2 ? uart_rdata : 
-                      (is_rom_addr_M2 ? Boot_Instr : bram_rdata);
+                      (is_rom_addr_M2 ? rom_rdata : ram_rdata);
 
 endmodule

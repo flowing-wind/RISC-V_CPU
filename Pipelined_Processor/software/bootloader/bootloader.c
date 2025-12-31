@@ -1,73 +1,52 @@
-#include <stdint.h>
-
-// UART base address
-#define UART_BASE 0x10000000
-
-// AXI-Lite reg
-#define UART_RX_FIFO    (*(volatile uint32_t *)(UART_BASE + 0X00))
-#define UART_TX_FIFO    (*(volatile uint32_t *)(UART_BASE + 0X04))
-#define UART_STATUS     (*(volatile uint32_t *)(UART_BASE + 0X08))
-#define UART_CTRL       (*(volatile uint32_t *)(UART_BASE + 0X0C))
-
-// Status reg
-#define STS_TX_FULL     (1 << 3)
-#define STS_TX_EMPTY    (1 << 2)
-#define STS_RX_VALID    (1 << 0)
-
-// APP ENTRY ADDR
-#define APP_ENTRY_ADDR 0x00001000
-
-void uart_putc(char c) {
-    while (UART_STATUS & STS_TX_FULL);
-    UART_TX_FIFO = c;
-}
-
-void uart_puts(const char *str) {
-    while (*str) {
-        uart_putc(*str++);
-    }
-}
-
-char uart_getc() {
-    while (!(UART_STATUS & STS_RX_VALID));
-    return (char)(UART_RX_FIFO & 0XFF);
-}
+#include "uart.h"
 
 void main() {
-    int jump2app = 1;
-    for (uint32_t i = 0; i < 5000000; i ++) {    // short window for loading prog
-        if (UART_STATUS & STS_RX_VALID) {
-            if (UART_RX_FIFO == 0x7F) {
-                jump2app = 0;
-                break;
+    UART_Init(0); // disable interrupt
+    uint32_t *app_entry_ptr = (uint32_t*)APP_ENTRY_ADDR;
+    int force_isp = 0;
+
+    // ISP
+    if (*app_entry_ptr == 0x0) {
+        while (1) {
+            if (UART_STATUS & UART_STS_RX_READY) {
+                if ((uint8_t)UART_RX_FIFO == CMD_WAKE_H) {
+                    if ((uint8_t)UART_RX_FIFO == CMD_WAKE_L) { force_isp = 1; break; }
+                }
+            }
+        }
+    } else {
+        // load window
+        for (volatile uint32_t i = 0; i < 500000; i++) {
+            if (UART_STATUS & UART_STS_RX_READY) {
+                if ((uint8_t)UART_RX_FIFO == CMD_WAKE_H) {
+                    if ((uint8_t)UART_RX_FIFO == CMD_WAKE_L) { force_isp = 1; break; }
+                }
             }
         }
     }
 
-    void (*app_entry)(void) = (void (*)(void))APP_ENTRY_ADDR;
-
-    if (jump2app) {
-        if (*(uint32_t*)APP_ENTRY_ADDR != 0x0) {
-            app_entry ();
-        }
+    if (!force_isp) {
+        ((void (*)(void))APP_ENTRY_ADDR)(); 
     }
 
+    // ACK
+    UART_SendChar(CMD_WAKE_H);
+    UART_SendChar(CMD_WAKE_L);
 
-    uint8_t *app_ptr = (uint8_t *)APP_ENTRY_ADDR;
     uint32_t prog_size = 0;
-
-    uart_putc('R');     // Ready to receive prog
-
     for(int i = 0; i < 4; i++) {
-        ((uint8_t*)&prog_size)[i] = uart_getc();
+        while (!(UART_STATUS & UART_STS_RX_READY));
+        ((uint8_t*)&prog_size)[i] = (uint8_t)UART_RX_FIFO;
     }
 
-    for(uint32_t i = 0; i < prog_size; i++) {
-        app_ptr[i] = uart_getc();
-        if (i % 128 == 0) uart_putc('.');
+    uint8_t *write_ptr = (uint8_t *)APP_ENTRY_ADDR;
+    for (uint32_t i = 0; i < prog_size; i++) {
+        while (!(UART_STATUS & UART_STS_RX_READY));
+        write_ptr[i] = (uint8_t)UART_RX_FIFO;
+        if (i % 128 == 0) UART_SendChar('.');
     }
 
-    uart_putc('\n');
-    uart_puts("Jumping...");
-    app_entry();
+    UART_SendString("\nJump...");
+    UART_Flush();
+    ((void (*)(void))APP_ENTRY_ADDR)();
 }
