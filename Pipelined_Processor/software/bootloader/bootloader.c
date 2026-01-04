@@ -14,8 +14,8 @@ void main() {
     int isp_step = 0;
 
     // wait for handshake
-    // uint32_t wait_timeout = (*app_entry_ptr == 0x0) ? 0xFFFFFFFF : 20000000;
-    uint32_t wait_timeout = 0xFFFFFFFF;
+    uint32_t wait_timeout = (*app_entry_ptr == 0x0) ? 0xFFFFFFFF : 20000000;
+    // uint32_t wait_timeout = 0xFFFFFFFF;
 
     for (volatile uint32_t i = 0; i < wait_timeout; i++) {
         if (UART_READ_REG(UART_ISP_BASE, UART_REG_STATUS) & UART_STS_RX_READY) {
@@ -62,6 +62,8 @@ void main() {
     UART_SendString(UART_ISP_BASE, "\nUpdate Done. Jumping...\n");
 
     while (!(UART_READ_REG(UART_ISP_BASE, UART_REG_STATUS) & UART_STS_TX_EMPTY));
+
+    for(volatile int i = 0; i < 5000000; i++);
     
     ((void (*)(void))APP_ENTRY_ADDR)();
 }

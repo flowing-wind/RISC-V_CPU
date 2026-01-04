@@ -4,7 +4,7 @@ import time
 import os
 import sys
 
-PORT = 'COM6'
+PORT = 'COM4'
 BAUD = 9600
 BIN_FILE = 'main.bin'
 
@@ -45,6 +45,7 @@ def upload():
     # Bootloader 现在的逻辑是握手成功后会回发 0x8A 0xBF
     ser.timeout = 2 # 设置超时防止卡死
     ack = ser.read(2)
+    print (f"received: {ack.hex()}")
     if ack != b'\x8A\xBF':
         print(f"Error: 握手失败，未收到ACK。收到: {ack.hex()}")
         return
