@@ -59,7 +59,7 @@ module tb_riscv ();
     initial begin
         uart_rx = 1;
 
-        #(15 * MS);
+        #(1 * MS);
         send_uart_char(8'h41);  // 'A'
 
         #(8 * MS);

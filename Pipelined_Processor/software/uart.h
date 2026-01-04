@@ -25,7 +25,4 @@ void UART_Init(uint32_t base_addr, int interrupt_en);
 void UART_SendChar(uint32_t base_addr, char ch);
 void UART_SendString(uint32_t base_addr, const char *s);
 
-int  UART_GetChar(uint32_t base_addr);  // User
-void UART_User_ISR(void);               // ISR
-
 #endif

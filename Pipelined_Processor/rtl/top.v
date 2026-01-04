@@ -79,10 +79,7 @@ module top(
             is_uart_addr_M2 <= 1'b0;
         end
         else begin
-            if (AXI_Stall)
-                is_uart_addr_M2 <= is_uart_addr_M2;
-            else
-                is_uart_addr_M2 <= is_uart_addr;
+            is_uart_addr_M2 <= is_uart_addr;
         end
     end
 
