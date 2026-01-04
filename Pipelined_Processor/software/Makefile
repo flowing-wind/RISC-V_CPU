@@ -32,8 +32,6 @@ $(DIS): $(ELF)
 $(COE): $(HEX)
 	$(PYTHON) hex2coe.py
 
-load: $(BIN)
-	$(PYTHON) uploader.py
 
 elf: $(ELF)
 bin: $(BIN)
@@ -44,4 +42,4 @@ coe: $(COE)
 clean:
 	rm -f $(ELF) $(BIN) $(HEX) $(DIS) $(COE)
 
-.PHONY: all clean elf bin hex dis coe load
+.PHONY: all clean elf bin hex dis coe

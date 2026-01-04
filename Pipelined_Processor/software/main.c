@@ -3,16 +3,16 @@
 
 void main() {
     // USER UART  -->  need interrupt
-    UART_Init(UART_USER_BASE, 1);
+    UART_Init(UART_BASE, 1);
 
-    UART_SendString(UART_USER_BASE, "System Started.\n");
+    UART_SendString(UART_BASE, "System Started.\n");
 
     while(1) {
-        int c = UART_GetChar(UART_USER_BASE);
+        int c = UART_GetChar(UART_BASE);
         
-        UART_SendString(UART_USER_BASE, "Received: ");
-        UART_SendChar(UART_USER_BASE, (char)c);
-        UART_SendChar(UART_USER_BASE, '\n');
+        UART_SendString(UART_BASE, "Received: ");
+        UART_SendChar(UART_BASE, (char)c);
+        UART_SendChar(UART_BASE, '\n');
     }
 }
 

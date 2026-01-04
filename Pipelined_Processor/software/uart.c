@@ -25,15 +25,8 @@ void UART_SendString(uint32_t base_addr, const char *s) {
     }
 }
 
-// ISP
-char UART_PollChar(uint32_t base_addr) {
-    while (!(UART_READ_REG(base_addr, UART_REG_STATUS) & UART_STS_RX_READY));
-    return (char)UART_READ_REG(base_addr, UART_REG_RX_FIFO);
-}
-
-// User
 int UART_GetChar(uint32_t base_addr) {
-    if (base_addr == UART_USER_BASE) {
+    if (base_addr == UART_BASE) {
         // wait for buffer
         while (user_rx_head == user_rx_tail);
         
@@ -41,17 +34,17 @@ int UART_GetChar(uint32_t base_addr) {
         user_rx_tail = (user_rx_tail + 1) % RX_BUF_SIZE;
         return (int)data;
     } else {
-        return UART_PollChar(base_addr);
+        return 0;
     }
 }
 
 // ISR
 void UART_User_ISR(void) {
-    uint32_t status = UART_READ_REG(UART_USER_BASE, UART_REG_STATUS);
+    uint32_t status = UART_READ_REG(UART_BASE, UART_REG_STATUS);
     
     // USER UART received data
     if (status & UART_STS_RX_READY) {
-        uint8_t ch = (uint8_t)UART_READ_REG(UART_USER_BASE, UART_REG_RX_FIFO);
+        uint8_t ch = (uint8_t)UART_READ_REG(UART_BASE, UART_REG_RX_FIFO);
         
         // save to buffer
         uint16_t next_head = (user_rx_head + 1) % RX_BUF_SIZE;

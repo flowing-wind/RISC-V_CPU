@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 
-#define UART_ISP_BASE       0x10000000
-#define UART_USER_BASE      0x20000000
+#define UART_BASE       0x10000000
 
 #define UART_REG_RX_FIFO    0x00
 #define UART_REG_TX_FIFO    0x04
@@ -26,7 +25,6 @@ void UART_Init(uint32_t base_addr, int interrupt_en);
 void UART_SendChar(uint32_t base_addr, char ch);
 void UART_SendString(uint32_t base_addr, const char *s);
 
-char UART_PollChar(uint32_t base_addr); // ISP
 int  UART_GetChar(uint32_t base_addr);  // User
 void UART_User_ISR(void);               // ISR
 
