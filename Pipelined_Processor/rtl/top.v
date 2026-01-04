@@ -1,6 +1,6 @@
 module top(
     input sys_clk,
-    input sys_rst_n,
+    input sys_rst,
 
     // isp UART
     input isp_uart_rx,
@@ -13,6 +13,7 @@ module top(
 
     // Generate reset signal
     wire locked;
+    wire sys_rst_n = ~sys_rst;
     wire async_reset_n = sys_rst_n && locked;
     wire reset, clk_core;
     reg [1:0] rst_sync_n;
@@ -83,6 +84,8 @@ module top(
 
     reg  is_rom_addr_M2, is_isp_uart_addr_M2, is_user_uart_addr_M2;    // addr should be kept, otherwise ReadData will change unexpectly
 
+    wire isp_stall, user_stall;
+
     assign Instr = (PC[31:12] == 20'h00000) ? Boot_Instr : RAM_Instr;
     
     always @(posedge clk_core or posedge reset) begin
@@ -91,10 +94,18 @@ module top(
             is_isp_uart_addr_M2  <= 1'b0;
             is_user_uart_addr_M2 <= 1'b0;
         end
-        else if (!AXI_Stall) begin
-            is_rom_addr_M2       <= is_rom_addr;
-            is_isp_uart_addr_M2  <= is_isp_uart_addr;
-            is_user_uart_addr_M2 <= is_user_uart_addr;
+        else begin
+            is_rom_addr_M2 <= is_rom_addr;
+
+            if (isp_stall)
+                is_isp_uart_addr_M2  <= is_isp_uart_addr_M2;
+            else
+                is_isp_uart_addr_M2  <= is_isp_uart_addr;
+
+            if (user_stall)
+                is_user_uart_addr_M2 <= is_user_uart_addr_M2;
+            else
+                is_user_uart_addr_M2 <= is_user_uart_addr;
         end
     end
 
@@ -110,7 +121,6 @@ module top(
     wire        m_axi_isp_bvalid, m_axi_isp_bready, m_axi_isp_arvalid, m_axi_isp_arready;
     wire        m_axi_isp_rvalid, m_axi_isp_rready;
 
-    wire isp_stall;
     wire [31:0] isp_rdata;
 
     // AXI_Bridge
@@ -173,7 +183,6 @@ module top(
     wire        m_axi_user_bvalid, m_axi_user_bready, m_axi_user_arvalid, m_axi_user_arready;
     wire        m_axi_user_rvalid, m_axi_user_rready;
 
-    wire user_stall;
     wire [31:0] user_rdata;
 
     // AXI_Bridge

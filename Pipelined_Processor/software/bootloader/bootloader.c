@@ -1,6 +1,6 @@
 #include "uart.h"
 
-#define APP_ENTRY_ADDR 0x00000000 
+#define APP_ENTRY_ADDR 0x00001000
 
 void main() {
     // ISP  -->  no interrupt
@@ -14,7 +14,8 @@ void main() {
     int isp_step = 0;
 
     // wait for handshake
-    uint32_t wait_timeout = (*app_entry_ptr == 0x0) ? 0xFFFFFFFF : 2000000;
+    // uint32_t wait_timeout = (*app_entry_ptr == 0x0) ? 0xFFFFFFFF : 20000000;
+    uint32_t wait_timeout = 0xFFFFFFFF;
 
     for (volatile uint32_t i = 0; i < wait_timeout; i++) {
         if (UART_READ_REG(UART_ISP_BASE, UART_REG_STATUS) & UART_STS_RX_READY) {

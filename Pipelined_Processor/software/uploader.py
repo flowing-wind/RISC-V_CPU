@@ -4,7 +4,7 @@ import time
 import os
 import sys
 
-PORT = 'COM4'
+PORT = 'COM6'
 BAUD = 9600
 BIN_FILE = 'main.bin'
 
