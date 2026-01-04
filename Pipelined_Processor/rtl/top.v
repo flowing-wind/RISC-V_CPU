@@ -78,7 +78,7 @@ module top(
         if (reset) begin
             is_uart_addr_M2 <= 1'b0;
         end
-        else begin
+        else if (!AXI_Stall) begin
             is_uart_addr_M2 <= is_uart_addr;
         end
     end
