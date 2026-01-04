@@ -86,7 +86,7 @@ trap_handler:
     li t1, 0x8000000B
     bne a0, t1, trap_exit
 
-    call external_interrupt_handler
+    call UART_ISR_Handler
 
 trap_exit:
     lw ra,  0(sp)

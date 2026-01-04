@@ -3,26 +3,31 @@
 
 #include <stdint.h>
 
-#define UART_BASE      0x10000000
-#define UART_RX_FIFO   (*(volatile uint32_t *)(UART_BASE + 0x00))
-#define UART_TX_FIFO   (*(volatile uint32_t *)(UART_BASE + 0x04))
-#define UART_STATUS    (*(volatile uint32_t *)(UART_BASE + 0x08))
-#define UART_CTRL      (*(volatile uint32_t *)(UART_BASE + 0x0C))
+#define UART_ISP_BASE       0x10000000
+#define UART_USER_BASE      0x20000000
 
-#define UART_STS_RX_READY (1 << 0)
-#define UART_STS_TX_EMPTY (1 << 2)
-#define UART_STS_TX_FULL  (1 << 3)
+#define UART_REG_RX_FIFO    0x00
+#define UART_REG_TX_FIFO    0x04
+#define UART_REG_STATUS     0x08
+#define UART_REG_CTRL       0x0C
+
+#define UART_STS_RX_READY   (1 << 0)
+#define UART_STS_TX_EMPTY   (1 << 2)
+#define UART_STS_TX_FULL    (1 << 3)
+
+#define UART_READ_REG(base, offset)  (*(volatile uint32_t *)((base) + (offset)))
+#define UART_WRITE_REG(base, offset, val)  (*(volatile uint32_t *)((base) + (offset)) = (val))
 
 #define CMD_WAKE_H 0x8A
 #define CMD_WAKE_L 0xBF
-#define CMD_END_H  0xFE
-#define CMD_END_L  0xFE
-#define APP_ENTRY_ADDR 0x00001000
+#define CMD_READY  0x5A
 
-void UART_Init(uint32_t interrupt_en);
-void UART_SendChar(uint8_t ch);
-void UART_SendString(const char *s);
-int  UART_ReceiveChar(uint8_t *pData);
-void UART_Flush(void);
+void UART_Init(uint32_t base_addr, int interrupt_en);
+void UART_SendChar(uint32_t base_addr, char ch);
+void UART_SendString(uint32_t base_addr, const char *s);
+
+char UART_PollChar(uint32_t base_addr); // ISP
+int  UART_GetChar(uint32_t base_addr);  // User
+void UART_User_ISR(void);               // ISR
 
 #endif
