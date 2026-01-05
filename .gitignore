@@ -10,5 +10,7 @@ results.xml
 *.elf
 *.dis
 Pipelined_Processor/software/*.hex
+Pipelined_Processor/software/*.coe
+Pipelined_Processor/software/main.c
 
 Pipelined_Processor/tcl/current_test.hex
