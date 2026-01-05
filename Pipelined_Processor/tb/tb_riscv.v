@@ -41,7 +41,7 @@ module tb_riscv ();
     // load testcase
     initial begin
         // vivado sim
-        // $readmemh("main.hex", dut.mem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
+        $readmemh("current_test.hex", dut.mem.inst.native_mem_mapped_module.blk_mem_gen_v8_4_12_inst.memory);
     end
 
 
@@ -63,40 +63,40 @@ module tb_riscv ();
         end
     endtask
 
-    initial begin
-        uart_rx = 1;
+    // initial begin
+    //     uart_rx = 1;
 
-        #(15 * MS);
-        send_uart_char(8'h41);  // 'A'
+    //     #(15 * MS);
+    //     send_uart_char(8'h41);  // 'A'
 
-        #(8 * MS);
-        $stop;
-    end
+    //     #(8 * MS);
+    //     $stop;
+    // end
 
 
     // debug
-    // wire [31:0] debug_gp = dut.cpu.d_unit.rf.regs[3];
-    // wire is_writing_tohost = (|dut.MemWrite_EN) && (dut.MemAddr == 32'h1000);
-    // wire [31:0] tohost_data = dut.WriteData;
+    wire [31:0] debug_gp = dut.cpu.d_unit.rf.regs[3];
+    wire is_writing_tohost = (|dut.MemWrite_EN) && (dut.MemAddr == 32'h1000);
+    wire [31:0] tohost_data = dut.WriteData;
 
     // used fot tcl
-    // reg [1:0] test_status = 2'd0;
+    reg [1:0] test_status = 2'd0;
 
-    // always @(*) begin
-    //     if (is_writing_tohost) begin
-    //         #5;
-    //         if (tohost_data == 1) begin
-    //             $display("--- Verilog: Test Passed (Write 1 to tohost) ---");
-    //             test_status = 2'd1;
-    //         end
-    //         else begin
-    //             $display("--- Verilog: Test Failed (Write %h to tohost) ---", tohost_data);
-    //             test_status = 2'd2;
-    //         end
+    always @(*) begin
+        if (is_writing_tohost) begin
+            #5;
+            if (tohost_data == 1) begin
+                $display("--- Verilog: Test Passed (Write 1 to tohost) ---");
+                test_status = 2'd1;
+            end
+            else begin
+                $display("--- Verilog: Test Failed (Write %h to tohost) ---", tohost_data);
+                test_status = 2'd2;
+            end
             
-    //         #2;
-    //         $stop;
-    //     end
-    // end
+            #2;
+            $stop;
+        end
+    end
 
 endmodule
