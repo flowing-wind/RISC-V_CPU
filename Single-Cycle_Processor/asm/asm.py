@@ -57,7 +57,7 @@ INSTR_DB = {
     'lhu':  {'type': 'I_mem', 'op': '0000011', 'f3': '101'},
 
     # --- I-Type Jump: op=1100111 ---
-    'jalr': {'type': 'I_mem', 'op': '1100111', 'f3': '000'}, # 语法类似于 lw: jalr rd, offset(rs1)
+    'jalr': {'type': 'I_mem', 'op': '1100111', 'f3': '000'},
 
     # --- S-Type: op=0100011 ---
     'sb':   {'type': 'S', 'op': '0100011', 'f3': '000'},
@@ -92,8 +92,8 @@ def assemble(asm_file, bin_file):
     instruction_count = 0
 
     for i, line in enumerate(lines):
-        line = line.split('#')[0].split('//')[0].strip() # 支持两种注释
-        if not line or line.endswith(':'): continue # 跳过空行和标签行
+        line = line.split('#')[0].split('//')[0].strip()
+        if not line or line.endswith(':'): continue
 
         # add x1, x2, x3  -->  ['add', 'x1', 'x2', 'x3']
         # lw x1, 4(x2)    -->  ['lw', 'x1', '4', 'x2']
@@ -155,7 +155,7 @@ def assemble(asm_file, bin_file):
             elif itype == 'B':
                 rs1 = to_bin(parse_reg(tokens[1]), 5)
                 rs2 = to_bin(parse_reg(tokens[2]), 5)
-                imm = to_bin(tokens[3], 13) # B-Type immediate is 13 bits (bit 0 is 0)
+                imm = to_bin(tokens[3], 13)
 
                 # imm[12] | imm[10:5] | rs2 | rs1 | funct3 | imm[4:1] | imm[11] | opcode
                 imm_12   = imm[0]
@@ -199,8 +199,8 @@ def assemble(asm_file, bin_file):
 
 if __name__ == "__main__":
     if len(sys.argv) >= 3:
-        input_file = sys.argv[1]  # dv/instr.asm)
-        output_file = sys.argv[2] # dv/instr.txt)
+        input_file = sys.argv[1]
+        output_file = sys.argv[2]
         assemble(input_file, output_file)
     else:
         print("[Asm] No args provided, using default 'instr.asm' -> 'main.bin'")
