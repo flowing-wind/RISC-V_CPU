@@ -11,7 +11,7 @@ module dmem (
     // init
     integer i;
     initial begin
-        for (i=0; i<64; i=i+1) begin
+        for (i=0; i<1024; i=i+1) begin
             RAM[i] <= 32'b0;
         end
     end
