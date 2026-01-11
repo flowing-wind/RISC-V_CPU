@@ -42,7 +42,7 @@ Pipelined_Processor/
 - **Python 3:** For memory image conversion.
 
 ## 🧪 Verification & Testing
-1. ### . Official ISA Regression (Automated)
+   ### 1. Official ISA Regression (Automated)
 
    This flow uses the official RISC-V test suite to verify the architectural correctness of every instruction. The process is automated via a Vivado Tcl script that runs all cases in batch.
 
