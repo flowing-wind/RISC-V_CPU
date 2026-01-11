@@ -5,7 +5,7 @@ A complete, from-scratch implementation of a **Single-Cycle RISC-V Processor** s
 ## ✨ Key Features
 
 - **RV32I ISA Support:** Implements all major instruction types: R, I, S, B, U, and J.
-- **Single-Cycle Architecture:** Designed for educational clarity, executing one instruction per clock cycle.
+- **Single-Cycle Architecture:** Executing one instruction per clock cycle.
 - **Full Software Stack:**
   - **C Environment:** Supports C programming with a custom linker script and startup assembly.
   - **Custom Assembler:** A Python script to convert RISC-V assembly into machine code binaries.
@@ -22,7 +22,7 @@ Single-Cycle_Processor/
 ├── asm/                # Custom Assembler
 ├── software/           # C Program and Toolchain scripts
 ├── dv/                 # Automated Verification (Cocotb & Python Model)
-└── tb/                 # Traditional Verilog Testbench
+└── tb/                 # Verilog Testbench
 ```
 
 ## 🛠️ Instruction Set Support

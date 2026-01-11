@@ -406,7 +406,7 @@ To enable communication between the high-speed processor pipeline and the system
 The bridge converts the processor's single-cycle memory requests into multi-cycle AXI4-Lite transactions using a Finite State Machine (FSM). The FSM ensures protocol compliance and manages the processor's stall signal (`cpu_stall`).
 
 - **IDLE:**
-	The FSM waits for a cpu_req. Upon a request, it immediately asserts the necessary AXI valid signals (`AWVALID`/`WVALID` for writes, `ARVALID` for reads) and transitions to the active state.
+	The FSM waits for a `cpu_req`. Upon a request, it immediately asserts the necessary AXI valid signals (`AWVALID`/`WVALID` for writes, `ARVALID` for reads) and transitions to the active state.
 
 - **Write Path:** (`WR_ADDR_DATA`, `WR_RESP`)
 
@@ -644,7 +644,7 @@ To validate the design on physical hardware, we synthesized and implemented the 
 
 - **Configuration:**
 
-	- **Input Frequency:** 50..00 MHz (Source: System Clock)
+	- **Input Frequency:** 50.00 MHz (Source: System Clock)
 
 	- **Output Frequency:** 60.00 MHz (Domain: `clk_core`)
 

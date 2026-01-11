@@ -4,10 +4,8 @@ def hex_to_coe(hex_file, coe_file):
 
     hex_data = []
     for line in lines:
-        # 排除 @ 地址行和空行
         if line.startswith('@') or not line.strip():
             continue
-        # 将一行中的多个 32-bit 数据拆分开
         hex_data.extend(line.split())
 
     with open(coe_file, 'w') as f:

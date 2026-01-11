@@ -178,4 +178,3 @@ module processor_core(
     );
 
 endmodule
-

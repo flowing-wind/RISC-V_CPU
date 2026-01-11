@@ -54,7 +54,7 @@ Pipelined_Processor/
 
    - **Command (Vivado Tcl Console):**
 
-     ```tcl
+     ```bash
      source <path to run_tests.tcl>
      ```
 
@@ -66,17 +66,13 @@ Pipelined_Processor/
 
    1. **Select a Demo:** Navigate to `software/demo/` and copy your target (e.g. `bubble_sort.c`) to the `software/` root.
 
-      Bash
-
-      ```
+      ```bash
       cp software/demo/bubble_sort.c software/main.c
       ```
 
    2. **Compile:** Run the Makefile to generate binaries and COE files.
 
-      Bash
-
-      ```
+      ```bash
       cd software
       make all
       ```
