@@ -14,7 +14,7 @@
 
 #define CTRL_RST_TX     (1 << 0) // Reset Tx FIFO
 #define CTRL_RST_RX     (1 << 1) // Reset Rx FIFO
-#define CTRL_INTR_EN    (1 << 4) // Enable Intr (全局开关!)
+#define CTRL_INTR_EN    (1 << 4) // Enable Intr
 
 // buffer
 #define RX_BUFFER_SIZE  256
