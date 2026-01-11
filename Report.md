@@ -1,6 +1,4 @@
-# Design and Implementation of a simple 
-
-# 7-Stage Pipelined RISC-V Processor
+<h1 align="center">Design and Implementation of a simple 7-Stage Pipelined RISC-V Processor</h1>
 
 ## Introduction
 This article presents the development of a 7-stage pipelined RISC-V processor. We outline the architectural evolution from a basic single-cycle core to a full RV32I-compliant processor. By transitioning to a 7-stage pipeline, we significantly optimized the system's instruction throughput. Finally, the design was integrated with a UART peripheral and deployed on an FPGA, where it successfully executed C-based applications, proving its reliability in a real hardware environment.
@@ -204,6 +202,8 @@ In addition to simulation, we validated the processor's capability to execute hi
 
 The program (`main.c`) utilizes Memory-Mapped I/O (MMIO) to toggle an LED connected to a specific address (0x80000000). It implements a delay loop to create a blinking effect. This test verifies the entire toolchain—from C compilation to instruction fetching and MMIO store operations. The processor successfully executed the program, resulting in the LED blinking as expected on the FPGA.
 
+---
+
 ## Pipelined Processor
 <figure>
   <img src="E:\Projects\RISC-V_CPU\_attachment\Figure_2_1.png" />
@@ -399,6 +399,61 @@ The `mret` instruction is used to return from a trap handler. When the `is_mret`
 	mstatus[7] <= 1'b1; 
 	```
 
+### Bus Interface and AXI Adaptation
+To enable communication between the high-speed processor pipeline and the system bus, we implemented an AXI-Lite Bridge. This module bridges the simple memory interface of the CPU (MemWrite, Addr, WData) with the handshake-based AXI4-Lite protocol.
+
+#### 1. AXI FSM Implementation
+The bridge converts the processor's single-cycle memory requests into multi-cycle AXI4-Lite transactions using a Finite State Machine (FSM). The FSM ensures protocol compliance and manages the processor's stall signal (`cpu_stall`).
+
+- **IDLE:**
+	The FSM waits for a cpu_req. Upon a request, it immediately asserts the necessary AXI valid signals (`AWVALID`/`WVALID` for writes, `ARVALID` for reads) and transitions to the active state.
+
+- **Write Path:** (`WR_ADDR_DATA`, `WR_RESP`)
+
+	- **WR_ADDR_DATA:**
+		To optimize throughput, the FSM attempts to handshake both the Write Address and Write Data channels simultaneously. It stays in this state until the slave accepts the data.
+
+	- **WR_RESP:**
+		Once the data is sent, the FSM waits for the Write Response (`BVALID`) from the slave to confirm transaction completion.
+
+- **Read Path:** (`RD_ADDR`, `RD_DATA`)
+
+	- **RD_ADDR:** Asserts the Read Address and waits for the slave's `ARREADY`.
+
+	- **RD_DATA:** Waits for `RVALID`, latches the incoming `RDATA` into the `cpu_rdata` register, and terminates the read transaction.
+
+- **WAIT_HANDSHAKE:** (Synchronization)
+
+	- This is a critical termination state. The stall logic is defined as
+		```verilog
+		assign cpu_stall = cpu_req && (state != WAIT_HANDSHAKE);
+		```
+	- By transitioning to `WAIT_HANDSHAKE` after a transaction completes, the bridge *de-asserts* `cpu_stall` for exactly one cycle, allowing the processor pipeline to advance and sample the valid `cpu_rdata` before the FSM returns to `IDLE`.
+
+#### 2. Address Stability Mechanism
+Directly interfacing a pipelined processor with a multi-cycle bus introduces signal stability challenges. The AXI protocol requires the address and control signals to *remain stable* once `VALID` is asserted. However, the processor's pipeline registers in the Memory stage might drift if the pipeline is stalled improperly or if combinatorial logic fluctuates.
+
+To resolve this, we implemented a dedicated address decoder register:
+```verilog
+reg is_uart_addr_M2;	// Latches the target peripheral selection
+always @(posedge clk_core or posedge reset) begin
+	if (reset)
+		is_uart_addr_M2 <= 1'b0;
+	else if (!AXI_Stall)
+		is_uart_addr_M2 <= is_uart_addr;
+end
+```
+
+- **Function:**
+	This register captures whether the current memory access targets the UART peripheral range at the beginning of the M2 stage.
+
+- **Why it is needed:**
+	During the multi-cycle AXI transaction (e.g. while the FSM is in RD_DATA waiting for the bus), the processor core is frozen. This register ensures that the data multiplexer (`ReadData`) consistently selects the AXI Bridge's output (`cpu_rdata`) throughout the entire stall duration, preventing data corruption or glitches before the valid data arrives.
+	
+	```verilog
+	assign ReadData = is_uart_addr_M2 ? uart_rdata : bram_rdata;
+	```
+
 ### Design Trade-offs and Performance Analysis
 Transiting from a single-cycle to a 7-stage pipeline introduces a trade-off between clock frequency and Instruction Per Cycle (IPC).
 
@@ -420,3 +475,240 @@ Transiting from a single-cycle to a 7-stage pipeline introduces a trade-off betw
 	Despite the lower IPC compared to a single-cycle machine, the substantial increase in clock speed results in a net performance gain for typical workloads. 
 
 ### Verification
+To ensure the reliability of the processor, we adopted a comprehensive verification strategy combining RTL simulation for architectural compliance and FPGA emulation for system-level integration.
+
+#### 1. RTL Simulation
+We verified the core's adherence to the RISC-V RV32I standard using the official rv32ui-p test suite.
+
+- **Methodology:**
+	We developed a TCL script to automate the testing process. The script iterates through the test suite, loading the hex file for each instruction into the simulation memory.
+
+- **Results:**
+	The processor passed the majority of the tests, confirming correct integer arithmetic and control flow logic.
+
+	- **Exceptions:**
+		The ma_data (misaligned data) test failed as intended, because our design traps misaligned accesses as exceptions rather than handling them in hardware. 
+		
+		```verilog
+		wire Addr_Misaligned = 
+			((Funct3_E == 3'b010) && (ALU_Result_E[1:0] != 0)) || // lw, sw  -->  4-aligned
+			((Funct3_E == 3'b001 || Funct3_E == 3'b101) && (ALU_Result_E[0] != 0)); // lh, lhu, sh --> 2-aligned
+		```
+		Additionally, the fence.i test passed by treating the instruction as a NOP, which is compliant for our simple core without a cache hierarchy.
+```bash
+========================================
+Test Summary
+========================================
+Total Passed: 41
+Total Failed: 1
+Failed Tests:
+  - rv32ui-p-ma_data.hex
+========================================
+```
+
+#### 2. FPGA Emulation and Software Testing
+Following simulation, we synthesized the design for FPGA to validate peripheral interaction and real-world execution.
+
+- **Software Stack:**
+	We wrote a custom startup file (`start.S`) and linker script (`link.ld`) to initialize the stack pointer and handle the C runtime environment.
+
+- **UART & Polling:**
+	The system successfully communicated via UART. For the demo applications, we utilized a *polling-based* driver. This design choice was made because the current UART hardware implementation shares interrupt logic for TX and RX without separation, and the interrupt latency made high-speed interrupt-driven I/O less stable for these specific demonstrations.
+
+##### Demos
+To strictly validate the processor's capability to execute high-level C code and interact with peripherals in a real-world environment, we developed and deployed three distinct demonstration programs. Each program targets specific aspects of the architecture, from basic I/O to complex data manipulation.
+
+1. **Basic Connectivity:** Hello World & Echo (`demo.c`)
+	This is the foundational test used to verify the reliability of the UART link and the system boot process.
+	
+	- **Functionality:**
+		Upon system reset, the processor initializes the UART controller and transmits a "Hello World!" banner. It then enters an infinite loop, monitoring the RX FIFO. Any character received from the host PC is immediately transmitted back (echoed) to the terminal.
+
+	- **Verification Goal:**
+		This demo confirms that the instruction fetch path, the stack initialization, and the basic MMIO (Memory-Mapped I/O) read/write operations for the UART peripheral are functioning correctly. It serves as the "sanity check" for the entire system.
+
+	- **Observed Result:**
+		The terminal displays the greeting message, and keystrokes are responsive without data corruption, confirming a stable 9600 baud rate connection.
+	```
+	[Rx] Hello World!
+	[Tx] RISC-V
+	[Rx] RISC-V
+	[Tx] This is a 7-Stage Pipelined RISC-V Processor.
+	[Rx] This is a 7-Stage Pipelined RISC-V Processor.
+	```
+2. **Arithmetic Stress Test:** Fibonacci Generator (`fibonacci_gen.c`)
+	This program tests the processor's arithmetic logic unit (ALU) and register file stability over long periods of execution.
+	
+	- **Functionality:**
+		The program continuously calculates the Fibonacci sequence ($F_n = F_{n-1} + F_{n-2}$). To make the output human-readable, a software delay loop is inserted between each iteration, slowing down the printing speed.
+	
+	- **Verification Goal:**
+		This verifies the correctness of ADD instructions, register data forwarding (as dependencies are tight in the calculation), and the processor's ability to handle continuous operation without accumulation errors.
+	
+	- **Observed Result:**
+		The consistent delay demonstrates the processor's reliable execution of long instruction sequences and the correct handling of the NOP-based delay loop without unexpected pipeline stalls or drifts.
+	```bash
+	[Rx] === Fibonacci Generator ===
+	[Rx] 1
+	[Rx] 1
+	[Rx] 2
+	[Rx] 3
+	[Rx] 5
+	[Rx] 8
+	[Rx] 13
+	[Rx] 21
+	[Rx] 34
+	[Rx] 55
+	[Rx] 89
+	[Rx] 144
+	[Rx] 233
+	[Rx] 377
+	[Rx] 610
+	[Rx] 987
+	[Rx] 1597
+	[Rx] 2584
+	[Rx] 4181
+	[Rx] 6765
+	...
+	```
+3. **Interactive Data Processing:** Bubble Sort (`bubble_sort.c`)
+	This is the most complex demo, designed to test memory operations, nested control flow, and string parsing.
+	
+	- **Functionality:**
+		The program implements an interactive command-line interface. It prompts the user to input a series of unsorted numbers (space-separated). The system reads the input string into a buffer, parses the characters into an integer array, sorts them using the Bubble Sort algorithm, and prints the result.
+
+	- **Verification Goal:** This application comprehensively tests:
+
+		- **Control Flow:**
+			Nested for loops and if conditions used in sorting logic heavily stress the branch prediction and flushing mechanisms.
+
+		- **Memory Access:**
+			Frequent array reads/writes verify the Load/Store unit and the Data Memory interface.
+
+		- **Logic:**
+			String-to-Integer conversion tests complex arithmetic and bitwise operations.
+
+	- **Observed Result:**
+		The processor correctly parses arbitrary inputs and outputs the sorted sequence, demonstrating full functional equivalence to a standard computer execution.
+	```bash
+	[Rx] === Bubble Sort ===
+	[Rx] Enter numbers: 
+	[Tx] 1 1 4 5 1 4
+	[Rx] 1 1 4 5 1 4
+	[Rx] Sorting 6 numbers...
+	[Rx] Result: 1 1 1 4 4 5 
+	[Rx] 
+	[Rx] Enter numbers: 
+	[Tx] 2 0 2 5 5 3 1 0 6 4
+	[Rx] 2 0 2 5 5 3 1 0 6 4
+	[Rx] Sorting 10 numbers...
+	[Rx] Result: 0 0 1 2 2 3 4 5 5 6 
+	```
+
+## Conclusion and Future Work
+
+### Conclusion
+In this project, we successfully designed and implemented a fully functional (RV32I) 32-bit RISC-V processor from scratch. The development process evolved from a basic single-cycle architecture to a high-performance 7-stage pipelined core, addressing the critical challenge of synchronous Block RAM latency in FPGA environments.
+
+Key achievements of this work include:
+
+- **Architectural Optimization:**
+	By splitting the Instruction Fetch and Memory Access stages, we resolved the timing constraints imposed by FPGA hardware, allowing for higher operating frequencies compared to standard 5-stage designs.
+
+- **Robust Hazard Management:**
+	The implementation of a comprehensive Hazard Unit effectively resolves data dependencies via forwarding and control hazards via flushing, ensuring correct execution logic.
+
+- **System-Level Integration:**
+	The processor was successfully integrated with an AXI-Lite bridge and UART peripherals. The verification results, ranging from RTL simulation to real-world FPGA demos (Fibonacci, Bubble Sort), demonstrate the core's capability to execute complex C programs reliably.
+
+### Future Work
+While the current design meets all functional requirements, several avenues for optimization remain:
+
+- **Dynamic Branch Prediction:**
+	Currently, the processor uses a static "Predict-Not-Taken" strategy. Implementing a Branch History Table (BHT) or a Branch Target Buffer (BTB) would significantly reduce the flush penalty for taken branches, improving IPC (Instructions Per Cycle).
+
+- **Cache Hierarchy:**
+	To support larger memory spaces, future iterations could introduce Instruction and Data Caches to hide memory access latency.
+
+- **Interrupt Controller Upgrade:**
+	Transitioning from the current simple CSR-based interrupt handling to a PLIC (Platform-Level Interrupt Controller) would allow for prioritized handling of multiple peripheral interrupts.
+
+- **DMA Support:**
+	Implementing a Direct Memory Access (DMA) controller for the UART module would offload data transfer tasks from the CPU, preventing the high overhead observed in interrupt-driven I/O.
+
+## Appendix: FPGA Implementation Details
+To validate the design on physical hardware, we synthesized and implemented the processor on the ZYNQ7020 using Xilinx Vivado. Key hardware primitives, including Clock Management and Memory Generators, were instantiated to ensure system stability and performance.
+
+### Clock Management (PLL)
+- **IP Used:** Xilinx Clocking Wizard (MMCM).
+
+- **Configuration:**
+
+	- **Input Frequency:** 50..00 MHz (Source: System Clock)
+
+	- **Output Frequency:** 60.00 MHz (Domain: `clk_core`)
+
+- **Reset Logic:** The IP provides a locked signal. The system reset (`sys_rst_n`) is logically ANDed with this locked signal to ensure the processor remains in reset until the clock signal stabilizes.
+
+### Memory
+Since our 7-stage pipeline can fetch an instruction (IF stage) and access data (MEM stage) in the same clock cycle, a single-port memory would cause structural hazards. To resolve this without complex arbitration logic, we utilized a True Dual-Port Block RAM.
+
+- **IP Used:** Block Memory Generator (BRAM).
+
+- **Configuration:**
+
+	- **Memory Type:** True Dual Port RAM.
+
+	- **Port A (Instruction Fetch):**
+		Connected to the IF stage (PC Address). Read-Only mode.
+
+	- **Port B (Data Access):**
+		Connected to the MEM stage (ALU Result Address). Read/Write mode.
+
+	- **Data Width:** 32-bit.
+
+	- **Depth:** 4*4096 (16KB Total Capacity).
+
+	- **Latency:** 1 clock cycle, perfectly matching the F1 -> F2 and M1 -> M2 pipeline stages.
+
+### UART
+To verify the AXI-Lite Bridge logic designed in RTL, we connected it to a compliant AXI-Lite UART IP.
+
+- **IP Used:** AXI Uartlite.
+
+- **Interface:** AXI4-Lite Slave.
+
+- **Functionality:** It bridges the high-speed processor bus to the slower UART serial lines. It includes internal TX/RX FIFOs to buffer data, preventing CPU stalls during high-speed transmission.
+
+- **Address Map:** Mapped to base address 0x10000000.
+
+
+### Implementation Results
+#### 1. Resource Utilization
+The design was synthesized targeting the xc7z020. The post-implementation utilization report indicates a compact design, leaving ample resources for future extensions.
+
+| Resource | Utilization | Available | Utilization % |
+| :------: | :---------: | :-------: | :-----------: |
+|   LUT    |    2530     |   53200   |     4.76      |
+|  LUTRAM  |     10      |   17400   |     0.06      |
+|    FF    |    2364     |  106400   |     2.22      |
+|   BRAM   |      4      |    140    |     2.86      |
+|    IO    |      4      |    125    |     3.20      |
+|   BUFG   |      2      |    32     |     6.25      |
+|   MMCM   |      1      |     4     |     25.00     |
+
+#### 2. Timing Analysis
+Timing closure is critical for pipelined processors. We performed Timing Analysis to verify setup and hold times.
+
+- **Target Constraint:** 16.67ns (60 MHz)
+
+- **Worst Negative Slack (WNS):** +0.697 ns
+	- Positive WNS indicates that the design meets the frequency requirements.
+
+- **Worst Hold Slack (WHS):** +0.117 ns 
+
+- **Max Estimated Frequency ($F_{max}$):**
+
+$$
+F_{max} = \frac{1}{T_{target} - WNS} \approx 62.62 \text{ MHz}
+$$

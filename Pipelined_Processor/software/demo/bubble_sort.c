@@ -38,7 +38,7 @@ void uart_readline(char *buffer, int max_len) {
         int received = uart_getc();
         if (received != -1) {
             c = (char)received;
-            // uart_putc(c);
+            uart_putc(c);
 
             if (idx == 0 && c == '\n') {
                 continue;
