@@ -37,3 +37,5 @@ cleanup:
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
+PYTHONPATH := $(abspath $(dir $(PYTHON_BIN))../Lib/site-packages)
+SIM_CMD_PREFIX ?= PYTHONPATH=$(PYTHONPATH)

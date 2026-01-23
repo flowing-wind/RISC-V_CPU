@@ -1,7 +1,7 @@
 # --- Vivado Tcl Script for RISC-V Regression Test ---
 
 # 打开工程
-open_project "E:/Projects/FPGA/Pipelined_Processor/Pipelined_Processor.xpr"
+open_project "E:/Projects/FPGA/RISC-V_CPU/Pipelined_Processor/Pipelined_Processor.xpr"
 
 # 先启动一次仿真，确保仿真环境建立
 launch_simulation

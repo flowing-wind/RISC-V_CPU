@@ -52,7 +52,7 @@ To run the automated test suite which compares the RTL against the Python Golden
 
 ```bash
 cd dv
-make run_test
+uv run make run_test
 ```
 
 The system will:
@@ -67,7 +67,7 @@ To compile the provided C demo (LED blinking):
 
 ```bash
 cd software
-make all
+uv run make all
 ```
 
 This generates `main.bin`, which can be loaded into the instruction memory (`imem.v`).

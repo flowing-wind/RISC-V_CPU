@@ -74,7 +74,7 @@ Pipelined_Processor/
 
       ```bash
       cd software
-      make all
+      uv run make all
       ```
 
       - The `make all` command generates `main.bin`, `main.hex`, and uses `hex2coe.py` to create a `.coe` file.
