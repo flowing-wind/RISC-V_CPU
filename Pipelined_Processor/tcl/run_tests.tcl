@@ -60,7 +60,7 @@ foreach hex_file $hex_files {
         if {$status_val == 2} {
             # 获取一下错误数据方便调试
             set data_val [get_value -radix unsigned /tb_riscv/tohost_data]
-            puts "  -> FAIL (Verilog detected error value: $data_val)"
+            puts "  -> FAIL (Verilog detected error value: $data_val, status_val: $status_val)"
         } else {
             puts "  -> FAIL (Timeout - test_status is still 0)"
         }

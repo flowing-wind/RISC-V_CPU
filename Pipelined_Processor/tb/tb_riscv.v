@@ -84,7 +84,7 @@ module tb_riscv ();
 
     always @(*) begin
         if (is_writing_tohost) begin
-            #5;
+            #3;
             if (tohost_data == 1) begin
                 $display("--- Verilog: Test Passed (Write 1 to tohost) ---");
                 test_status = 2'd1;
@@ -94,7 +94,7 @@ module tb_riscv ();
                 test_status = 2'd2;
             end
             
-            #2;
+            #3;
             $stop;
         end
     end
